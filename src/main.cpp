@@ -21,23 +21,23 @@ Measurements measured_values;  // struct to store all measured values
 Matrix3 estimated_DCM;  // matrix to store current estimated attitude
 State current_state;
 Control commands;
-Vector4 control_action;
+Vector4 control_action; 
 
 unsigned long start_time = 0;
 float initial_yaw = 0;
 uint32_t motors_on = 0;
 
 Sensors sensors = Sensors();
-Communication comm = Communication();
+Communication comm = Communication(); 
 Controller controller = Controller();
 
 void setup() {
   // Start serial
   Serial.begin(115200);
-  Serial.println("Starting up");
   if (DEBUG){  // wait until serial is open
     while(!Serial){}
   }
+  Serial.println("Starting up");
 
   // Start Wire for gyro, altimeter, accelerometer and magnetometer
   Wire.setSDA(4);
@@ -71,6 +71,8 @@ void setup() {
     }
   }
 
+  Serial.println("Setup finished!");
+
   // start of the control loop
   estimated_DCM = acc_mag2DCM(measured_values); // init DCM
   current_state = compute_state(estimated_DCM, measured_values);  // initial state for reference
@@ -84,10 +86,7 @@ void setup1(){
   }
 }
 
-unsigned long last_ctrl_msg;  // for lost signal detection
-
-void loop() {  // approxx 1.5 ms per loop 
-
+void loop() {  // approxx 0.85 ms per loop 
   while(digitalRead(SWITCH_PIN)) {  // stop motors and blink red LED if switch is on
     signal_motors(zero_4vector);  
     digitalWrite(REDLED_PIN, 1);  
@@ -105,7 +104,7 @@ void loop() {  // approxx 1.5 ms per loop
   Control ctrl_commands = commands;
   motors_on = ctrl_commands.motors_on;
   
-  measured_values = sensors.get_measurements_filtered();  // update measurements from gyro, acc, mag and alt (and integration_period time constant)
+  measured_values = sensors.get_measurements_filtered();  // update measurements from gyro, acc, mag and alt (and dt)
 
   if (sensors.imu_timed_out || sensors.alt_timed_out || comm.comm_timed_out) digitalWrite(REDLED_PIN, HIGH); // indicate failure
   else digitalWrite(REDLED_PIN, LOW);  
@@ -125,37 +124,18 @@ void loop() {  // approxx 1.5 ms per loop
 }
 
 void loop1() {
-  if ((millis() - last_ctrl_msg) >= 90){  // more than 90 milliseconds from last command
+  if ((millis() - comm.last_ctrl_msg) >= 90){  // more than 90 milliseconds from last command
     Control received_commands = comm.update_commands(initial_yaw);  // receive new command 
     commands = received_commands;
   }
   else{  // less than 90 milliseconds from last command ==> we can send telemetry
     current_state = compute_state(estimated_DCM, measured_values);  // initial state for reference
-    if (TELEMETRY && (comm.ctrl_msg_count > 50)) {
-      sensor_struct data;
-      data.height = current_state.alt;
-      data.battery = measured_values.battery;
-      telemetry_msg_t msg;
-      msg.type = 1;
-      msg.data.sensor_data = data;
-      comm.send_telemetry(msg);  // send some data back to controller every 50 ctrl cycles 
+    if (TELEMETRY && (comm.ctrl_msg_count > 50)) {  // send some data back to controller every 50 ctrl cycles 
+      telemetry_msg_t msg = comm.create_batt_telemetry(current_state, measured_values);
+      comm.send_telemetry(msg);  
     }
-
-    state_struct data;
-    data.ms = millis();
-    data.roll = current_state.roll;
-    data.pitch = current_state.pitch;
-    // data.yaw = current_state.yaw;
-    data.yaw = constrain_angle(current_state.yaw - initial_yaw);  // send yaw difference instead of yaw
-    
-    data.motors[0] = uint16_t(control_action(0)*65535);
-    data.motors[1] = uint16_t(control_action(1)*65535);
-    data.motors[2] = uint16_t(control_action(2)*65535);
-    data.motors[3] = uint16_t(control_action(3)*65535);
-
-    telemetry_msg_t msg;
-    msg.data.state_data = data;
-    msg.type = 0;
+    // the following telemetry takes about 0.9 ms
+    telemetry_msg_t msg = comm.create_state_telemetry(current_state, control_action, initial_yaw);
     comm.send_telemetry(msg);
   }
 
