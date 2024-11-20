@@ -28,10 +28,10 @@ void PID::set_PID_params(float setP, float setI, float setD, float sat, float se
 		Serial.println(nm + " PID parameters set " + String(P, 2) + " " + String(LPc, 2));
 }
 	
-float PID::process(float reference, float measurement, float integration_period){
+float PID::process(float reference, float measurement, float dt){
 	float error = reference - measurement;
 
-	float diff_error = (error - prev_error) / integration_period; // derivation
+	float diff_error = (error - prev_error) / dt; // derivation (around 10 with very slow movements)
 	if (abs(diff_error) <= differr_deadband)
 		diff_error = 0;																						 // ignore noise in derivative
 	diff_error = LPc * diff_error + (1 - LPc) * prev_diff_error; // Low pass filter on derivative to reduce noise spikes
@@ -39,7 +39,7 @@ float PID::process(float reference, float measurement, float integration_period)
 	prev_diff_error = diff_error;
 	prev_error = error;
 
-	sum_error += error * integration_period;									 // integration
+	sum_error += error * dt;									 // integration
 	sum_error = constrain(sum_error, -saturation, saturation); // anti windup
 
 	return P * error + I * sum_error + D * diff_error;
