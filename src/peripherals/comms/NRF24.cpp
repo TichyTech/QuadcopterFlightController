@@ -2,10 +2,6 @@
 
 Communication::Communication(){
   radio = RF24(17, 20);
-  if (!radio.begin(&SPI, 17, 20)) { // blocking 
-    Serial.println(F("radio hardware is not responding!!"));
-    while (1) {} 
-  }
   comm_timed_out = 0;
   new_roll_config = 0;
   new_pitch_config = 0;
@@ -14,6 +10,12 @@ Communication::Communication(){
 
 void Communication::setup_nrf(){
   Serial.println("Setting up communication module");
+
+  if (!radio.begin(&SPI, 17, 20)) { // blocking 
+    Serial.println(F("radio hardware is not responding!!"));
+    while (1) {} 
+  }
+  
   radio.setPALevel(RF24_PA_HIGH);
   radio.setChannel(3);
   radio.setAddressWidth(3);
@@ -22,7 +24,7 @@ void Communication::setup_nrf(){
   radio.openWritingPipe(STATADD);
   radio.openReadingPipe(1, CMDADD); 
   radio.startListening();  
-  last_ctrl_msg = millis();  
+  last_ctrl_msg = 0;  
 }
 
 Control Communication::update_commands(float initial_yaw){  // receive latest command message with lost signal handling
@@ -39,6 +41,7 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
       new_ctrl_msg = msg.data.ctrl_data; 
     }
     else if (msg.type == 1){ // config message received
+      Serial.println("config received");
       config_msg_t new_config = msg.data.config_data;
       if (new_config.axis == 0){  // roll
         roll_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
@@ -74,6 +77,35 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
   }
   return latest_control;
 };
+
+telemetry_msg_t Communication::create_state_telemetry(State state, Vector4 control, float init_yaw){
+  state_struct data;
+  data.ms = millis();
+  data.roll = state.roll;
+  data.pitch = state.pitch;
+  // data.yaw = current_state.yaw;
+  data.yaw = constrain_angle(state.yaw - init_yaw);  // send yaw difference instead of yaw
+  
+  data.motors[0] = uint16_t(control(0)*65535);
+  data.motors[1] = uint16_t(control(1)*65535);
+  data.motors[2] = uint16_t(control(2)*65535);
+  data.motors[3] = uint16_t(control(3)*65535);
+
+  telemetry_msg_t msg;
+  msg.data.state_data = data;
+  msg.type = 0;
+  return msg;
+}
+
+telemetry_msg_t Communication::create_batt_telemetry(State state, Measurements m){
+  sensor_struct data;
+  data.height = state.alt;
+  data.battery = m.battery;
+  telemetry_msg_t msg;
+  msg.type = 1;
+  msg.data.sensor_data = data;
+  return msg;
+}
 
 void Communication::send_telemetry(telemetry_msg_t msg){
   radio.stopListening(); 
