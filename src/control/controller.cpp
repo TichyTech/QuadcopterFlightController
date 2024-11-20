@@ -27,6 +27,7 @@ Controller::Controller(){
   yaw_rate_PID = PID(35, 0, 0.01, 0, 0.02, 40, "yaw"); 
   alt_PID = PID(50, 5, 30, 2, 0.5, 0, "alt");
 
+  // For a linear system, this would yield a time constant tau = 1/P
   roll_P = 3;
   pitch_P = 3;
   yaw_P = 4;
@@ -62,16 +63,18 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
   forces(1) = constrain(forces(1), -40, 40);
   forces(2) = constrain(forces(2), -60, 60);
 
-  Vector4 new_percentages = mix_motors(forces, DCM, commands.throttle);
+  Vector4 new_percentages = mix_motors(forces, DCM, commands.throttle, m.battery);
   // motor_percentages = new_percentages*MOTOR_LPF + motor_percentages*(1-MOTOR_LPF);
 
   // Jerk clamping 
-  Vector4 d_p = new_percentages - motor_percentages;  // clamp the difference of the motor settings from previous control
-  d_p(0) = constrain(d_p(0), -0.1, 0.1);
-  d_p(1) = constrain(d_p(1), -0.1, 0.1);
-  d_p(2) = constrain(d_p(2), -0.1, 0.1);
-  d_p(3) = constrain(d_p(3), -0.1, 0.1);
-  motor_percentages = motor_percentages + d_p;
+  Vector4 d_p = (new_percentages - motor_percentages)/dt;  //normalize by time constant
+  // clamp to about +-20 full-scale per second (or 2% per millisecond)
+  const float change_limit = 20;
+  d_p(0) = constrain(d_p(0), -change_limit, change_limit);
+  d_p(1) = constrain(d_p(1), -change_limit, change_limit);
+  d_p(2) = constrain(d_p(2), -change_limit, change_limit);
+  d_p(3) = constrain(d_p(3), -change_limit, change_limit);
+  motor_percentages = motor_percentages + d_p*dt;
 
   switch(commands.motors_on){ // enable turning on one motor at a time for debbuging purposes
     case 2:
@@ -93,7 +96,7 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
   return motor_percentages;
 }
 
-Vector4 Controller::mix_motors(Vector3 forces, Matrix3 DCM, float throttle){  
+Vector4 Controller::mix_motors(Vector3 forces, Matrix3 DCM, float throttle, float battery){  
   //TODO: include battery charge compensation, YAW compensation
   Vector4 motor_percentages = {0, 0, 0, 0};
   if (DCM(2,2) > 0){  // facing up
@@ -111,7 +114,8 @@ Vector4 Controller::mix_motors(Vector3 forces, Matrix3 DCM, float throttle){
   // }
   motor_percentages += yaw_action*forces(2) / (MOTOR_FORCE);
 
-  // motor_percentages *= (IDEAL_VOLTAGE*IDEAL_VOLTAGE)/(battery_charge*battery_charge);  // battery charge compensation
+  if (battery > 10) // should always be the case, if battery is connected
+  motor_percentages *= (IDEAL_VOLTAGE*IDEAL_VOLTAGE)/(battery*battery);  // battery charge compensation
 
   motor_percentages(0) = constrain(motor_percentages(0), 0, 1);
   motor_percentages(1) = constrain(motor_percentages(1), 0, 1);

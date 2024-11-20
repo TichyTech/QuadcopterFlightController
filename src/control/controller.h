@@ -22,6 +22,6 @@ class Controller{
 
 		void update_DCM(Matrix3 DCM);
 		Vector4 update_motor_percentages(Control commands, Measurements m);
-		Vector4 mix_motors(Vector3 forces, Matrix3 DCM, float throttle);
+		Vector4 mix_motors(Vector3 forces, Matrix3 DCM, float throttle, float battery);
 
 };
