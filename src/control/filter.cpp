@@ -13,10 +13,10 @@ Matrix3 update_DCM(Matrix3 current_DCM, Measurements m){
   Vector3 gyro_omega = -m.gyro_vec*TO_RAD*m.integration_period;  // Gyro measured rotation
   // compute correcting rotations in axis angle form
 
-  float a_n = norm(m.acc_vec);
+  float acc_norm = norm(m.acc_vec);
   Vector3 joint_omega;
 
-  if (a_n > 0.7 & a_n < 1.3){
+  if (acc_norm > 0.7 & acc_norm < 1.3){
   Matrix3 measured_DCM = acc_mag2DCM(m);  // first, build a DCM from the measured acc and mag vectors
   Vector3 acc_omega = get_omega(current_DCM.Column(2), measured_DCM.Column(2)); // Pitch and Roll correction 
   Vector3 mag_omega = get_omega(current_DCM.Column(0), measured_DCM.Column(0)); // Yaw correction
