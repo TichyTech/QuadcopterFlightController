@@ -3,8 +3,11 @@
 #include <RF24.h>
 #include <nRF24L01.h>
 
-#define PRINT_STATE 1
+#include "comm_structs.h"
+
+#define HUMAN_READABLE 0
 #define PRINT_COMMANDS 0
+#define DEBUG 0
 
 RF24 radio(9,10); // CE, CSN
 
@@ -59,7 +62,7 @@ void setup() {
   X2start = analogRead(JOYRX_PIN);
   Y2start = analogRead(JOYRY_PIN);
   
-  Serial.begin(115200);
+  Serial.begin(500000);
   while (!Serial){}
 
   SPI.setClockDivider(SPI_CLOCK_DIV2);
@@ -81,6 +84,8 @@ void setup() {
   
   printf_begin();
   radio.printPrettyDetails();
+
+  Serial.println("Setup done");
 }
 
 float Xval;
@@ -98,7 +103,6 @@ bool led_on = 0;
 long last_cmd_t = 0;
 long last_shown = 0;
 
-
 void loop() {
 
   Xval = (analogRead(JOYLX_PIN) - Xstart)/20.0;  // pm 12.5 degs
@@ -113,7 +117,7 @@ void loop() {
   if (!digitalRead(BUTTON_L) && button1_state){
     button1_state = 0;
     motors_mode = 1 + ((motors_mode) % 5);
-    Serial.println("Left button pressed");
+    if (DEBUG) Serial.println("Left button pressed");
   }
   
   if (digitalRead(BUTTON_R) && !button2_state){ 
@@ -122,7 +126,7 @@ void loop() {
   if (!digitalRead(BUTTON_R) && button2_state){
     button2_state = 0;
     motors_on = !motors_on;
-    Serial.println("Right button pressed");
+    if (DEBUG) Serial.println("Right button pressed");
   }
 
   analogWrite(LED1, int(256*Xval/30));
@@ -153,21 +157,23 @@ void loop() {
     report = radio.startWrite(&msg, sizeof(msg_t), 0); 
     long end_time = micros();
     delayMicroseconds(250);
-    radio.startListening(); 
+    radio.startListening();
+    radio.flush_rx();
+    if (DEBUG) Serial.println("Sending commands"); 
     if (PRINT_COMMANDS){
-    Serial.print(Xval);
-    Serial.print(" ");
-    Serial.print(Yval);
-    Serial.print(" ");
-    Serial.print(X2val);
-    Serial.print(" ");
-    Serial.print(Y2val);
-    Serial.print(" ");
-//    Serial.print(Tval);
-//    Serial.print(" ");
-//    Serial.print(motors_mode);
-    Serial.println(" ");
-    Serial.println(motors_on);
+      Serial.print(Xval);
+      Serial.print(" ");
+      Serial.print(Yval);
+      Serial.print(" ");
+      Serial.print(X2val);
+      Serial.print(" ");
+      Serial.print(Y2val);
+      Serial.print(" ");
+      Serial.print(Tval);
+      Serial.print(" ");
+      Serial.print(motors_mode);
+      Serial.println(" ");
+      Serial.println(motors_on);
     }
 //    
 //    Serial.println("Transmit took " + String(end_time - start_time) + " microseconds");
@@ -185,17 +191,17 @@ void loop() {
       if (msg == "roll"){
         new_config = {P, I, D, sat, LPc, 0};
         String text = "Sending roll config: P " + String(P, 2) + ", I " + String(I, 2) + ", D " + String(D, 2) + ", sat " + String(sat, 2) + ", LPc " + String(LPc, 2);
-        Serial.println(text);
+        if (DEBUG) Serial.println(text);
       }
       else if (msg == "pitch"){
         new_config = {P, I, D, sat, LPc, 1};
         String text = "Sending pitch config: P " + String(P, 2) + ", I " + String(I, 2) + ", D " + String(D, 2) + ", sat " + String(sat, 2) + ", LPc " + String(LPc, 2);
-        Serial.println(text);
+        if (DEBUG) Serial.println(text);
       }
       else if (msg == "yaw"){
         new_config = {P, I, D, sat, LPc, 2};
         String text = "Sending yaw config: P " + String(P, 2) + ", I " + String(I, 2) + ", D " + String(D, 2) + ", sat " + String(sat, 2) + ", LPc " + String(LPc, 2);
-        Serial.println(text);
+        if (DEBUG) Serial.println(text);
       }
       // sent config message
       msg_t msg; 
@@ -204,7 +210,7 @@ void loop() {
       bool report = 0;
       radio.stopListening(); 
       report = radio.write(&msg, sizeof(msg_t));
-      if (report){
+      if (report && DEBUG){
         Serial.print("Config sent");
       }
       radio.startListening(); 
@@ -217,33 +223,20 @@ void loop() {
   if(radio.available(&pipe)){
     radio.read(&tele_msg, sizeof(tele_msg)); 
     if (tele_msg.type == 0){  // state data
-      if ((millis() - last_shown) > 33){
-        if (PRINT_STATE){
-          state_struct s_data = tele_msg.data.state_data;
-          Serial.print("State: ");
-  //        Serial.print(s_data.ms);  
-  //        Serial.print(' ');   
-          Serial.print(s_data.roll);  
-          Serial.print(' ');   
-          Serial.print(s_data.pitch);  
-          Serial.print(' ');   
-          Serial.print(s_data.yaw); 
-          for (int i = 0; i < 4; i++){
-            Serial.print(" " + String(s_data.motors[i]/65535.0));
-          }
-          Serial.println();
-        }
-        last_shown = millis();
+      if (HUMAN_READABLE){
+        char buffr[100];
+        state_struct s_data = tele_msg.data.state_data; 
+        format_state(s_data, buffr, sizeof(buffr));  //1168 micros
+        Serial.println(buffr);  // 828 micros
       }
+      else Serial.write((uint8_t*)&tele_msg, sizeof(tele_msg));
     }
     if (tele_msg.type == 1){  // sensor data
-      sensor_struct s_data = tele_msg.data.sensor_data;
-      Serial.print("Telemetry: ");
-      Serial.print(s_data.battery);  
-      Serial.print(' ');   
-      Serial.println(s_data.height); 
+      if (HUMAN_READABLE){
+        sensor_struct s_data = tele_msg.data.sensor_data;
+        Serial.println("Telemetry: " + String(s_data.battery) + " " + String(s_data.height));
+      }
+      else Serial.write((uint8_t*)&tele_msg, sizeof(tele_msg));
     }
   }
-
-//  delay(100);
 }
