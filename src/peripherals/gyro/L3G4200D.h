@@ -10,6 +10,11 @@ class Gyro{
         Vector3 filtered_gyro_vec;
         unsigned long last_gyro_timestamp; 
 
+        // dynamic bias compensation variables
+        bool bias_compensation_on;
+        Vector3 dynamic_bias;
+        uint32_t bias_timer;
+
     public:
         bool gyro_timeout;
 
