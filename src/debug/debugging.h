@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include "comm_structs.h"
 
 using namespace BLA;
 
