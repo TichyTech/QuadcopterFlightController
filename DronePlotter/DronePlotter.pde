@@ -1,10 +1,19 @@
 import processing.opengl.*;
 import processing.serial.*;
- 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
+long last_draw = 0;
+long num_messages = 0;
+long new_messages = 0;
+float mean_msg = 0;
+
 Serial sp;
 byte[] buff = new byte[256];
 float[] RPY = new float[3];
 float[] motor_percentages = new float[4];
+float[] forces = new float[3];
+long ms;
 float altitude = 0;
 float battery = 0;
 
@@ -13,6 +22,8 @@ String inputText = "";        // Store the current input text
 String lastInputText = "";    // Store the last input text (saved text)
 int cursorPos = 0;          // Position of the cursor in the input text
 
+// Logging structure 
+DataPoints database;
  
 void setup() {
   size(1080, 720, P3D);
@@ -23,25 +34,24 @@ void setup() {
   
   printArray(Serial.list());
   String portName = Serial.list()[3];
-  sp = new Serial(this, portName, 115200);
+  sp = new Serial(this, portName, 500000);
   println("Connecting to " + portName);
+  
+  database = new DataPoints(2048);
+  wait_for_setup();
 }
    
+int numBytes = 0;
+final boolean human_readable = false;  // are we receiving packed binary data, or human readable string
+
 void draw() {
-  if (sp.available() > 0){
-    int numBytes = sp.readBytesUntil('\n', buff); 
-    String mystr = (new String(buff, 0, numBytes)).trim();
-    String[] split_string = split(mystr, ' ');
-    String msg_type = split_string[0];
-    
-    if(msg_type.equals("State:")){    
-      loadValsState(split_string); 
-    }
-    
-    if(msg_type.equals("Telemetry:")){
-      loadValsTelemetry(split_string);
-    }
-    
+  
+  if (human_readable) handle_serial_readable();
+  else handle_serial_gibberish();
+  
+  long current_millis = millis();
+  long dt = current_millis - last_draw;
+  if (dt > 15){
     background(0.5,0.5,0.5); 
     directionalLight(1, 1, 1, 0, 0, -1);
     pushMatrix();
@@ -56,13 +66,11 @@ void draw() {
     //drawText(mystr, 200, 50);
     drawState(RPY, 50, 20);
     drawMP(motor_percentages, 200, 20);
+    drawForces(forces, 200, 60);
     drawTelemetry(altitude, battery, 460, 20);
-  }
-  fill(240);  // Light gray background for the input box
-  rect(50, height-90, 500, 40, 10);  // Draw input box
-  fill(0);  // Black color for text
-  textAlign(LEFT, BASELINE);
-  text(inputText, 60, height-60);  // Display text inside the box
-  float cursorX = textWidth(inputText.substring(0, cursorPos)) + 60; // Position based on the cursor position
-  line(cursorX, height-60, cursorX, height-80);  // Draw a cursor
+    drawMessageCount(dt, 800, 40);
+    drawCommandLine();
+    
+    last_draw = current_millis;
+    }
 }
