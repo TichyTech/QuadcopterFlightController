@@ -78,18 +78,22 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
   return latest_control;
 };
 
-telemetry_msg_t Communication::create_state_telemetry(State state, Vector4 control, float init_yaw){
+telemetry_msg_t Communication::create_state_telemetry(State state, Vector4 control, float init_yaw, Vector3 PID_outputs){
   state_struct data;
   data.ms = millis();
-  data.roll = state.roll;
-  data.pitch = state.pitch;
+  data.roll = angle_to_int(state.roll);
+  data.pitch = angle_to_int(state.pitch);
   // data.yaw = current_state.yaw;
-  data.yaw = constrain_angle(state.yaw - init_yaw);  // send yaw difference instead of yaw
+  data.yaw = angle_to_int(constrain_angle(state.yaw - init_yaw));  // send yaw difference instead of yaw
   
-  data.motors[0] = uint16_t(control(0)*65535);
-  data.motors[1] = uint16_t(control(1)*65535);
-  data.motors[2] = uint16_t(control(2)*65535);
-  data.motors[3] = uint16_t(control(3)*65535);
+  data.motors[0] = action_to_int(control(0));
+  data.motors[1] = action_to_int(control(1));
+  data.motors[2] = action_to_int(control(2));
+  data.motors[3] = action_to_int(control(3));
+
+  data.PID_outputs[0] = force_to_int(PID_outputs(0));
+  data.PID_outputs[1] = force_to_int(PID_outputs(1));
+  data.PID_outputs[2] = force_to_int(PID_outputs(2));
 
   telemetry_msg_t msg;
   msg.data.state_data = data;

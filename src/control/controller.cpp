@@ -24,15 +24,17 @@ Controller::Controller(){
   roll_rate_PID = PID(2, 0, 0.005, 1, 0.02, 40, "roll");
   pitch_rate_PID = PID(2, 0, 0.005, 1, 0.02, 40, "pitch");
   // yaw_rate_PID = PID(35, 5, 0, 1, 0, 0, "yaw"); 
-  yaw_rate_PID = PID(35, 0, 0.01, 0, 0.02, 40, "yaw"); 
+  // yaw_rate_PID = PID(35, 0, 0.01, 0, 0.02, 40, "yaw"); 
+  yaw_rate_PID = PID(10, 0, 0.01, 0, 0.02, 40, "yaw"); 
   alt_PID = PID(50, 5, 30, 2, 0.5, 0, "alt");
 
   // For a linear system, this would yield a time constant tau = 1/P
   roll_P = 3;
   pitch_P = 3;
-  yaw_P = 4;
+  yaw_P = 2;
 
   motor_percentages = {0,0,0,0};
+  last_PID_outputs = {0,0,0};
 }
 
 void Controller::update_DCM(Matrix3 newDCM){
@@ -58,6 +60,8 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
   forces(0) = roll_rate_PID.process( des_rates(0), m.gyro_vec(0), dt);
   forces(1) = pitch_rate_PID.process(des_rates(1), m.gyro_vec(1), dt);
   forces(2) = yaw_rate_PID.process(  des_rates(2), m.gyro_vec(2), dt);
+
+  last_PID_outputs = forces;  // for telemetry
 
   forces(0) = constrain(forces(0), -40, 40);
   forces(1) = constrain(forces(1), -40, 40);

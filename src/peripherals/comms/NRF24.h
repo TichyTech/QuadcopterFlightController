@@ -3,6 +3,7 @@
 #include "algebra.h"
 #include "config.h"
 #include <SPI.h>
+#include "comm_structs.h"
 
 const byte CMDADD[4] = "DRR";  // receive address
 const byte STATADD[4] = "DRT";  // transmit address
@@ -26,7 +27,7 @@ class Communication{
 
     void setup_nrf();
     Control update_commands(float initial_yaw);
-    telemetry_msg_t create_state_telemetry(State state, Vector4 control, float init_yaw);
+    telemetry_msg_t create_state_telemetry(State state, Vector4 control, float init_yaw, Vector3 PID_outputs);
     telemetry_msg_t create_batt_telemetry(State state, Measurements m);
     void send_telemetry(telemetry_msg_t msg);
 

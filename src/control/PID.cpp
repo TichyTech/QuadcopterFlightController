@@ -16,6 +16,7 @@ PID::PID(float setP, float setI, float setD, float sat, float setLPc, float set_
 	LPc = setLPc; // derivative low pass filter coefficient
 	differr_deadband = set_differr_deadband;
 	nm = setName;
+  last_output = 0;
 };
 
 void PID::set_PID_params(float setP, float setI, float setD, float sat, float setLPc){
@@ -42,5 +43,7 @@ float PID::process(float reference, float measurement, float dt){
 	sum_error += error * dt;									 // integration
 	sum_error = constrain(sum_error, -saturation, saturation); // anti windup
 
-	return P * error + I * sum_error + D * diff_error;
+  last_output = P * error + I * sum_error + D * diff_error;
+
+	return last_output;
 }

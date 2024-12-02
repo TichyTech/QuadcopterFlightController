@@ -9,7 +9,10 @@ Matrix3 acc_mag2DCM(Measurements m){
   return DCM;  
 }
 
-Matrix3 update_DCM(Matrix3 current_DCM, Measurements m){
+/**
+ * Complementary filter implementation
+ */
+Matrix3 update_DCM_CF(Matrix3 current_DCM, Measurements m){
   Vector3 gyro_omega = -m.gyro_vec*TO_RAD*m.integration_period;  // Gyro measured rotation
   // compute correcting rotations in axis angle form
 
@@ -17,15 +20,17 @@ Matrix3 update_DCM(Matrix3 current_DCM, Measurements m){
   Vector3 joint_omega;
 
   if (acc_norm > 0.7 & acc_norm < 1.3){
-  Matrix3 measured_DCM = acc_mag2DCM(m);  // first, build a DCM from the measured acc and mag vectors
-  Vector3 acc_omega = get_omega(current_DCM.Column(2), measured_DCM.Column(2)); // Pitch and Roll correction 
-  Vector3 mag_omega = get_omega(current_DCM.Column(0), measured_DCM.Column(0)); // Yaw correction
-  mag_omega = current_DCM.Column(2) * dot(mag_omega, current_DCM.Column(2));  // project the mag compensation into Z axis
-  // For small enough rotations, we can add the axis angle representation together, since infinitesimal rotations commute
-  joint_omega = (acc_omega + mag_omega*0.1)*(1 - CF_RATIO) + gyro_omega*CF_RATIO;  // complementary filter in axis-angle domain
+    Matrix3 measured_DCM = acc_mag2DCM(m);  // first, build a DCM from the measured acc and mag vectors
+    Vector3 acc_omega = get_omega(current_DCM.Column(2), measured_DCM.Column(2)); // Pitch and Roll correction 
+    Vector3 mag_omega = get_omega(current_DCM.Column(0), measured_DCM.Column(0)); // Yaw correction
+    mag_omega = current_DCM.Column(2) * dot(mag_omega, current_DCM.Column(2));  // project the mag compensation into Z axis
+    // For small enough rotations, we can add the axis angle representation together, since infinitesimal rotations commute
+    joint_omega = (acc_omega + mag_omega)*(1 - CF_RATIO) + gyro_omega*CF_RATIO;  // complementary filter in axis-angle domain
+    printVec3(acc_omega, 2);
+    Serial.println();
   }
   else{
-  joint_omega = gyro_omega;  // if acceleration is out of range, use only gyro
+    joint_omega = gyro_omega;  // if acceleration is out of range, use only gyro
   }
 
   Matrix3 updated_DCM = rodriguez(joint_omega)*current_DCM;  // update using rotation matrix obtained from the combined axis angle
@@ -33,10 +38,36 @@ Matrix3 update_DCM(Matrix3 current_DCM, Measurements m){
   return updated_DCM; 
 }
 
+/** 
+ * My implementation of a predict-correct DCM filter
+ */
+Matrix3 update_DCM_PC(Matrix3 current_DCM, Measurements m){
+  // First, predict, how DCM changes due to gyro measurement
+  Vector3 gyro_omega = -m.gyro_vec*TO_RAD*m.integration_period;  // Gyro measured rotation
+  Matrix3 updated_DCM = rodriguez(gyro_omega)*current_DCM; // prediction step
+
+  // Second, correct the resulting matrix using acc and mag
+  // float acc_norm = norm(m.acc_vec);
+  // Vector3 joint_omega;
+  // if (acc_norm > 0.95 & acc_norm < 1.05){
+  //   Matrix3 measured_DCM = acc_mag2DCM(m);  // first, build a DCM from the measured acc and mag vectors
+  //   Vector3 acc_omega = get_omega(updated_DCM.Column(2), measured_DCM.Column(2)); // Pitch and Roll correction 
+  //   Vector3 mag_omega = get_omega(updated_DCM.Column(0), measured_DCM.Column(0)); // Yaw correction
+  //   mag_omega = updated_DCM.Column(2) * dot(mag_omega, updated_DCM.Column(2));  // project the mag compensation into Z axis
+  //   // For small enough rotations, we can add the axis angle representation together, since infinitesimal rotations commute
+  //   joint_omega = acc_omega + mag_omega; 
+  //   updated_DCM = rodriguez(joint_omega*0.001)*updated_DCM; // correction step
+  // }
+
+  // normalize matrix for numerical stability
+  if ( !(0.99 < det(updated_DCM) < 1.01) ) updated_DCM = normalize_matrix(updated_DCM);
+  return updated_DCM; 
+}
+
 Vector3 get_omega(Vector3 a, Vector3 b){  // c = angle(a,b)*(a x b)/|a x b|
   Vector3 c = skew(a) * b;  // rotation axis
   float sine = norm(c);  
-  if (sine < 0.0001) return zero_3vector;
+  if (sine < 0.01) return zero_3vector;  // for small values of sine, sin(x) ~ x, 0.01 rad ~ 0.5 degree (negligible)
   float cosine = norm(dot(a, b));
   float angle = atan2(sine, cosine);  // rotation angle
   return c * (1/sine) * angle;  // Theta * e

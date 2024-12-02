@@ -86,6 +86,8 @@ void setup1(){
   }
 }
 
+uint16_t loop_counter = 0;
+
 void loop() {  // approxx 0.85 ms per loop 
   while(digitalRead(SWITCH_PIN)) {  // stop motors and blink red LED if switch is on
     signal_motors(zero_4vector);  
@@ -106,6 +108,13 @@ void loop() {  // approxx 0.85 ms per loop
   
   measured_values = sensors.get_measurements_filtered();  // update measurements from gyro, acc, mag and alt (and dt)
 
+  // loop_counter++;
+  // if (loop_counter == 10){
+  //   printVec3(measured_values.gyro_vec, 2);
+  //   Serial.println();
+  //   loop_counter = 0;
+  // }
+
   if (sensors.imu_timed_out || sensors.alt_timed_out || comm.comm_timed_out) digitalWrite(REDLED_PIN, HIGH); // indicate failure
   else digitalWrite(REDLED_PIN, LOW);  
   if (SAFETY){
@@ -115,7 +124,8 @@ void loop() {  // approxx 0.85 ms per loop
   if (motors_on > 0) digitalWrite(GREENLED_PIN, HIGH);  // light up green if motors run
   else digitalWrite(GREENLED_PIN, LOW);
 
-  estimated_DCM = update_DCM(estimated_DCM, measured_values);  // update DCM matrix
+  // estimated_DCM = acc_mag2DCM(measured_values); // init DCM
+  estimated_DCM = update_DCM_PC(estimated_DCM, measured_values);  // update DCM matrix
   controller.update_DCM(estimated_DCM);
   control_action = controller.update_motor_percentages(ctrl_commands, measured_values);
 
@@ -135,7 +145,7 @@ void loop1() {
       comm.send_telemetry(msg);  
     }
     // the following telemetry takes about 0.9 ms
-    telemetry_msg_t msg = comm.create_state_telemetry(current_state, control_action, initial_yaw);
+    telemetry_msg_t msg = comm.create_state_telemetry(current_state, control_action, initial_yaw, controller.last_PID_outputs);
     comm.send_telemetry(msg);
   }
 

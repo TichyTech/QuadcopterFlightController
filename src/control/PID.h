@@ -10,6 +10,7 @@ class PID{
     float P, I, D, saturation, LPc;
   public:
     String nm = "";
+    float last_output;
 
     PID();
     PID(float setP, float setI, float setD, float sat, float setLPc, float set_differr_deadband, String setName);

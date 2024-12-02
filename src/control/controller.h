@@ -19,6 +19,7 @@ class Controller{
 		Vector4 motor_percentages;
 	public:
 		Controller();
+    Vector3 last_PID_outputs;
 
 		void update_DCM(Matrix3 DCM);
 		Vector4 update_motor_percentages(Control commands, Measurements m);
