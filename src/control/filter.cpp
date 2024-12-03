@@ -17,7 +17,7 @@ Matrix3 update_DCM_CF(Matrix3 current_DCM, Measurements m){
   // compute correcting rotations in axis angle form
 
   float acc_norm = norm(m.acc_vec);
-  Vector3 joint_omega;
+  Vector3 joint_omega = {0,0,0};
 
   if (acc_norm > 0.7 & acc_norm < 1.3){
     Matrix3 measured_DCM = acc_mag2DCM(m);  // first, build a DCM from the measured acc and mag vectors
@@ -33,34 +33,49 @@ Matrix3 update_DCM_CF(Matrix3 current_DCM, Measurements m){
     joint_omega = gyro_omega;  // if acceleration is out of range, use only gyro
   }
 
-  Matrix3 updated_DCM = rodriguez(joint_omega)*current_DCM;  // update using rotation matrix obtained from the combined axis angle
-  if ( !(0.99 < det(updated_DCM) < 1.01) ) updated_DCM = normalize_matrix(updated_DCM);  // normalize matrix if needed
+  Matrix3 updated_DCM = current_DCM;
+  float joint_mag = norm(joint_omega);
+  if (joint_mag > 1e-6){
+    updated_DCM = rodriguez(joint_omega/joint_mag, joint_mag)*current_DCM;  // update using rotation matrix obtained from the combined axis angle
+    if ( !(0.99 < det(updated_DCM) < 1.01) ) updated_DCM = normalize_matrix(updated_DCM);  // normalize matrix if needed
+  }
+  
   return updated_DCM; 
 }
 
 /** 
  * My implementation of a predict-correct DCM filter
  */
-Matrix3 update_DCM_PC(Matrix3 current_DCM, Measurements m){
+Matrix3 update_DCM_rejection(Matrix3 current_DCM, Measurements m){
   // First, predict, how DCM changes due to gyro measurement
   Vector3 gyro_omega = -m.gyro_vec*TO_RAD*m.integration_period;  // Gyro measured rotation
-  Matrix3 updated_DCM = rodriguez(gyro_omega)*current_DCM; // prediction step
 
-  // Second, correct the resulting matrix using acc and mag
-  // float acc_norm = norm(m.acc_vec);
-  // Vector3 joint_omega;
-  // if (acc_norm > 0.95 & acc_norm < 1.05){
-  //   Matrix3 measured_DCM = acc_mag2DCM(m);  // first, build a DCM from the measured acc and mag vectors
-  //   Vector3 acc_omega = get_omega(updated_DCM.Column(2), measured_DCM.Column(2)); // Pitch and Roll correction 
-  //   Vector3 mag_omega = get_omega(updated_DCM.Column(0), measured_DCM.Column(0)); // Yaw correction
-  //   mag_omega = updated_DCM.Column(2) * dot(mag_omega, updated_DCM.Column(2));  // project the mag compensation into Z axis
-  //   // For small enough rotations, we can add the axis angle representation together, since infinitesimal rotations commute
-  //   joint_omega = acc_omega + mag_omega; 
-  //   updated_DCM = rodriguez(joint_omega*0.001)*updated_DCM; // correction step
-  // }
+  Vector3 accmag_omega = {0,0,0};
+  float acc_norm = norm(m.acc_vec);
+  static float acc_timer = 0;  // timer for acceleration rejection
+  if (acc_norm > 0.9 & acc_norm < 1.1){
+    acc_timer = acc_timer + m.integration_period;
+    if (acc_timer > 0.1){  // at least 100 ms in range
+      Matrix3 measured_DCM = acc_mag2DCM(m);  // first, build a DCM from the measured acc and mag vectors
+      accmag_omega = get_omega(current_DCM.Column(2), measured_DCM.Column(2)); // Pitch and Roll correction 
 
-  // normalize matrix for numerical stability
-  if ( !(0.99 < det(updated_DCM) < 1.01) ) updated_DCM = normalize_matrix(updated_DCM);
+      float mag_norm = norm(m.mag_vec);
+      if (mag_norm > 0.22 & mag_norm < 0.67){
+        Vector3 mag_omega = get_omega(current_DCM.Column(1), measured_DCM.Column(1)); // Yaw correction
+        accmag_omega = accmag_omega + mag_omega;
+      }
+    }
+  }
+  else acc_timer = 0;
+
+  Vector3 joint_omega = accmag_omega*0.01 + gyro_omega;
+  float total_angle = norm(joint_omega);
+  Matrix3 updated_DCM = current_DCM;
+  if (total_angle > 1e-6){
+    updated_DCM = rodriguez(joint_omega/total_angle, total_angle)*current_DCM;
+    if ( !(0.99 < det(updated_DCM) < 1.01) ) updated_DCM = normalize_matrix(updated_DCM);  // normalize matrix for numerical stability
+  }
+  
   return updated_DCM; 
 }
 

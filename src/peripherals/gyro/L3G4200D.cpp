@@ -5,12 +5,16 @@
 #define GYRO_ADR 0x69
 // #define DPS_PER_LSB 0.01526  // for +-500 dps FS assuming 16 bits of data
 #define DPS_PER_LSB 0.0610351  // for +- 2000 dps FS
-#define GYRO_REFRESH_PERIOD 1250  // for 800 Hz
+#define ROLL_MULT 1.139f  // sensitivity calibration 
+#define PITCH_MULT 1.166f  // sensitivity calibration 
+#define YAW_MULT 1.1556f  // sensitivity calibration 
+#define GYRO_REFRESH_RATE 800.0f  // for 800 Hz
+#define GYRO_REFRESH_PERIOD (1.0/GYRO_REFRESH_RATE) // in seconds
 
 // dynamic bias compensation definitions
 #define CUTOFF_FREQUENCY (0.02f)
-#define THRESHOLD (3.0f)
-#define TIMEOUT (5000)  // milliseconds 
+#define THRESHOLD (4.0f)
+#define TIMEOUT (500)  // milliseconds 
 
 Gyro::Gyro(){
   gyro_bias = {0,0,0};
@@ -58,8 +62,7 @@ void Gyro::setup_gyro() {
 
 Vector3 Gyro::read_gyro() {
   uint32_t current_micros = micros();
-  if ((current_micros - last_gyro_timestamp) < GYRO_REFRESH_PERIOD) return last_gyro_vec; 
-  else last_gyro_timestamp = micros();
+  if ((current_micros - last_gyro_timestamp) < GYRO_REFRESH_PERIOD*1000000) return last_gyro_vec; 
   
   Wire.beginTransmission(GYRO_ADR);
   Wire.write(0x28 | (1 << 7));
@@ -80,18 +83,18 @@ Vector3 Gyro::read_gyro() {
   uint8_t zhg = Wire.read();
 
   Vector3 gyro_vals;
-  gyro_vals(1) =  float((int16_t)(xhg << 8 | xlg));
-  gyro_vals(0) =  float((int16_t)(yhg << 8 | ylg));
-  gyro_vals(2) =  -float((int16_t)(zhg << 8 | zlg));
+  gyro_vals(1) =  PITCH_MULT*float((int16_t)(xhg << 8 | xlg));
+  gyro_vals(0) =  ROLL_MULT*float((int16_t)(yhg << 8 | ylg));
+  gyro_vals(2) =  -YAW_MULT*float((int16_t)(zhg << 8 | zlg));
   gyro_vals = gyro_vals*DPS_PER_LSB - gyro_bias;  // corrected reading
 
   // dynamic bias compensation implementation
-  if (bias_compensation_on){
+  if (bias_compensation_on){  // according to Madgwick
     gyro_vals = gyro_vals - dynamic_bias;
     if (abs(gyro_vals(0)) < THRESHOLD || abs(gyro_vals(1)) < THRESHOLD || abs(gyro_vals(2)) < THRESHOLD){  // omega in range
-      bias_timer += current_micros/1000;
+      bias_timer += (current_micros - last_gyro_timestamp)/1000;
       if (bias_timer > TIMEOUT){
-        dynamic_bias = dynamic_bias + gyro_vals * (2 * PI * CUTOFF_FREQUENCY * GYRO_REFRESH_PERIOD / 1000.0);  // 2 pi f_c / f_s
+        dynamic_bias = dynamic_bias + gyro_vals * (2 * PI * CUTOFF_FREQUENCY / GYRO_REFRESH_RATE);  // 2 pi f_c / f_s
       }
     }
     else bias_timer = 0;  // omega outside of range
@@ -99,11 +102,12 @@ Vector3 Gyro::read_gyro() {
   }
 
   last_gyro_vec = gyro_vals;
+  last_gyro_timestamp = current_micros;
   return gyro_vals; 
 }
 
 Vector3 Gyro::get_filtered_gyro(){
-  if ((micros() - last_gyro_timestamp) < GYRO_REFRESH_PERIOD) return filtered_gyro_vec; 
+  if ((micros() - last_gyro_timestamp) < GYRO_REFRESH_PERIOD*1000000) return filtered_gyro_vec; 
   Vector3 gyro_reading = read_gyro();
   filtered_gyro_vec = gyro_reading * GYROLPF_RATIO + filtered_gyro_vec * (1 - GYROLPF_RATIO);
   return filtered_gyro_vec;
@@ -115,7 +119,7 @@ void Gyro::calibrate_gyro(){
   delay(2000);
   for (int i = 0; i < 100; i ++){
     data += read_gyro()/100;
-    delayMicroseconds(GYRO_REFRESH_PERIOD + 100);
+    delayMicroseconds(GYRO_REFRESH_PERIOD*1000000 + 100);
   }
   gyro_bias = data;
   // printVec3(gyro_bias, 3);
