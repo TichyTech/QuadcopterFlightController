@@ -31,6 +31,15 @@ void printState(State state, uint8_t precision){
   Serial.print(' ');
 }
 
+void printMeasurement(Measurements m, uint8_t precision){
+  Serial.print("gyro: ");
+  printVec3(m.gyro_vec, precision);
+  Serial.print("acc: ");
+  printVec3(m.acc_vec, precision);
+  Serial.print("mag: ");
+  printVec3(m.mag_vec, precision);
+}
+
 void printControlMessage(ctrl_msg_t msg, uint8_t precision){
   Serial.print(msg.roll, precision);
   Serial.print(' ');
