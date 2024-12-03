@@ -59,11 +59,8 @@ inline Matrix3 skew(Vector3 v){  // skew symmetric matrix
 /**
  * This function implements the Rodriguez formula for a conversion from the axis angle representation to a rotation matrix representation.
  */
-inline Matrix3 rodriguez(Vector3 omega){
-  float angle = norm(omega);
-  if (angle < 0.00001) return I;  // for small angles, just return 
-  Vector3 e = omega / angle;  // unit rotation axis
-  Matrix3 K = skew(e);
+inline Matrix3 rodriguez(Vector3 axis, float angle){
+  Matrix3 K = skew(axis);
   Matrix3 R = I + K*sin(angle) + K*K*(1 - cos(angle));  // Rodriguez rotation formula
   return R;
 }
