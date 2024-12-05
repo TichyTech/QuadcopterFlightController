@@ -142,15 +142,21 @@ Vector3 AccMag::get_filtered_mag(){
 };
 
 void AccMag::calibrate_acc(){  // sensor needs to be perpendicular to gravity vector
-  acc_bias = {0,0,0};
-  Vector3 data = {0,0,0};
-  delay(2000);
-  for (int i = 0; i < 100; i ++){
-    data += read_acc()/100;
+  // assuming stationary IMU, we first obtain the direction of gravity
+  Vector3 grav_dir = {0,0,0};
+  delay(500);
+  for (int i = 0; i < 50; i ++){
+    grav_dir += read_acc()/50;
     delayMicroseconds(ACC_REFRESH_PERIOD + 100);
   }
-  acc_bias = data;
-  acc_bias(2) -= 1;  // subtract 1 g from z
+  grav_dir = normalize(grav_dir);  // get gravity vector of magnitude 1
+
+  // zero out bias and add average of the samples to it
+  acc_bias = {0,0,0};
+  for (int i = 0; i < 100; i ++){
+    acc_bias += (read_acc() - grav_dir)/100;
+    delayMicroseconds(ACC_REFRESH_PERIOD + 100);
+  }
   // printVec3(acc_bias, 3);
   Serial.println("Accelerometer calibrated");
 }

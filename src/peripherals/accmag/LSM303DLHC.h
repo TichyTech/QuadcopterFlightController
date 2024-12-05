@@ -1,6 +1,6 @@
 #include "config.h"
 #include "peripherals/writeReg.h"
-#include "definitions.h"
+#include "algebra.h"
 
 class AccMag{
     private:
