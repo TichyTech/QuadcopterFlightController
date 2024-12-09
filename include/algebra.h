@@ -82,8 +82,8 @@ inline Matrix3 normalize_columns(Matrix3 A){
 inline Matrix3 normalize_matrix(Matrix3 A){
   Vector3 a1,a2,a3;
   float e = dot(A.Column(0), A.Column(1));
-  a1 = A.Column(0) - A.Column(1)*e/2;
-  a2 = A.Column(1) - A.Column(0)*e/2;
+  a1 = A.Column(0) - A.Column(1)*e/2.0f;
+  a2 = A.Column(1) - A.Column(0)*e/2.0f;
   a3 = skew(A.Column(0)) * A.Column(1);
   return normalize_columns(a1 || a2 || a3);
 }

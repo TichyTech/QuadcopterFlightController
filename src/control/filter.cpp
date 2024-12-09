@@ -1,5 +1,7 @@
 #include "filter.h"
 
+#define DCM_REJ_K 0.01f
+
 Matrix3 acc_mag2DCM(Measurements m){
   // Use current measurements to construct a direction cosine matrix [North, West, Up]
   Matrix3 DCM;
@@ -68,7 +70,7 @@ Matrix3 update_DCM_rejection(Matrix3 current_DCM, Measurements m){
   }
   else acc_timer = 0;
 
-  Vector3 joint_omega = accmag_omega*0.01 + gyro_omega;
+  Vector3 joint_omega = accmag_omega*DCM_REJ_K + gyro_omega;
   float total_angle = norm(joint_omega);
   Matrix3 updated_DCM = current_DCM;
   if (total_angle > 1e-6){

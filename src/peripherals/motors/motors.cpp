@@ -58,17 +58,17 @@ void arm_motors(){
   Serial.println("Arming motors");
   Vector4 arm_percentages = {1, 1, 1, 1};
   for (int i = 0; i < 500; i++){
-    signal_motors(arm_percentages*0);
+    signal_motors(arm_percentages*0.0f);
     delay(1);
   }
 
   for (int i = 0; i < 500; i++){
-    signal_motors(arm_percentages*0.6);
+    signal_motors(arm_percentages*0.6f);
     delay(1);
   }
   
   for (int i = 0; i < 500; i++){
-    signal_motors(arm_percentages*0);
+    signal_motors(arm_percentages*0.0f);
     delay(1);
   }
 }

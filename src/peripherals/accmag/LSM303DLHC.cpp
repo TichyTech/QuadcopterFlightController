@@ -7,8 +7,8 @@
 // #define ACC_REFRESH_PERIOD 2500  // for 400 HZ
 #define ACC_REFRESH_PERIOD 745  // for 1344 HZ
 #define MAG_REFRESH_PERIOD 4555  // for 220 HZ
-#define ACC_FS 2.0  // g
-#define MAG_FS 1.3  // gauss
+#define ACC_FS 2.0f  // g
+#define MAG_FS 1.3f  // gauss
 
 AccMag::AccMag(){
   acc_bias = {0,0,0};
@@ -146,7 +146,7 @@ void AccMag::calibrate_acc(){  // sensor needs to be perpendicular to gravity ve
   Vector3 grav_dir = {0,0,0};
   delay(500);
   for (int i = 0; i < 50; i ++){
-    grav_dir += read_acc()/50;
+    grav_dir += read_acc()/50.0f;
     delayMicroseconds(ACC_REFRESH_PERIOD + 100);
   }
   grav_dir = normalize(grav_dir);  // get gravity vector of magnitude 1
@@ -154,9 +154,8 @@ void AccMag::calibrate_acc(){  // sensor needs to be perpendicular to gravity ve
   // zero out bias and add average of the samples to it
   acc_bias = {0,0,0};
   for (int i = 0; i < 100; i ++){
-    acc_bias += (read_acc() - grav_dir)/100;
+    acc_bias += (read_acc() - grav_dir)/100.0f;
     delayMicroseconds(ACC_REFRESH_PERIOD + 100);
   }
-  // printVec3(acc_bias, 3);
   Serial.println("Accelerometer calibrated");
 }

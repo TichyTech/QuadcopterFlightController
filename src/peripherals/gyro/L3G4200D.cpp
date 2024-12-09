@@ -4,12 +4,12 @@
 
 #define GYRO_ADR 0x69
 // #define DPS_PER_LSB 0.01526  // for +-500 dps FS assuming 16 bits of data
-#define DPS_PER_LSB 0.0610351  // for +- 2000 dps FS
+#define DPS_PER_LSB 0.0610351f  // for +- 2000 dps FS
 #define ROLL_MULT 1.139f  // sensitivity calibration 
 #define PITCH_MULT 1.166f  // sensitivity calibration 
 #define YAW_MULT 1.1556f  // sensitivity calibration 
 #define GYRO_REFRESH_RATE 800.0f  // for 800 Hz
-#define GYRO_REFRESH_PERIOD (1.0/GYRO_REFRESH_RATE) // in seconds
+#define GYRO_REFRESH_PERIOD (1.0f/GYRO_REFRESH_RATE) // in seconds
 
 // dynamic bias compensation definitions
 #define CUTOFF_FREQUENCY (0.02f)
@@ -94,7 +94,7 @@ Vector3 Gyro::read_gyro() {
     if (abs(gyro_vals(0)) < THRESHOLD || abs(gyro_vals(1)) < THRESHOLD || abs(gyro_vals(2)) < THRESHOLD){  // omega in range
       bias_timer += (current_micros - last_gyro_timestamp)/1000;
       if (bias_timer > TIMEOUT){
-        dynamic_bias = dynamic_bias + gyro_vals * (2 * PI * CUTOFF_FREQUENCY / GYRO_REFRESH_RATE);  // 2 pi f_c / f_s
+        dynamic_bias = dynamic_bias + gyro_vals * (2 * PI_F * CUTOFF_FREQUENCY / GYRO_REFRESH_RATE);  // 2 pi f_c / f_s
       }
     }
     else bias_timer = 0;  // omega outside of range
@@ -118,7 +118,7 @@ void Gyro::calibrate_gyro(){
   Vector3 data = {0,0,0};
   delay(2000);
   for (int i = 0; i < 100; i ++){
-    data += read_gyro()/100;
+    data += read_gyro()/100.0f;
     delayMicroseconds(GYRO_REFRESH_PERIOD*1000000 + 100);
   }
   gyro_bias = data;

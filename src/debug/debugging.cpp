@@ -54,7 +54,7 @@ void printControlMessage(ctrl_msg_t msg, uint8_t precision){
 }
 
 void printR2Processing(Matrix3 R){
-  Matrix3 M = R *1024;
+  Matrix3 M = R * 1024.0f;
   for (int j = 0; j < 3; j++){
     for (int i = 0; i < 3; i++){
       Serial.print(int(M(i,j)));  // col1, col2, col3

@@ -20,27 +20,26 @@
 // Settings
 #define SAFETY 1  // set safe mode
 #define TELEMETRY 1 
-#define DEBUG 0 // enable debugging messages
+#define DEBUG 1 // enable debugging messages
 
 // Timeout settings
 #define COMMAND_TIMEOUT_MS 60000  // 60000 ms
 #define SENSOR_TIMEOUT_US 2000  // 2 ms
 
 // filter constants
-#define GYROLPF_RATIO 0.1
-#define ACCLPF_RATIO 0.01
-#define MAGLPF_RATIO 0.05
-#define ALTLPF_RATIO 0.05
-#define BATLPF_RATIO 0.1
-#define MOTOR_LPF 0.7
-#define CF_RATIO 0.9995
+#define GYROLPF_RATIO 1.0f  // used to weight the new measurement
+#define ACCLPF_RATIO 0.01f  // used to weight the new measurement
+#define MAGLPF_RATIO 0.05f  // used to weight the new measurement
+#define ALTLPF_RATIO 0.05f  // used to weight the new measurement
+#define BATLPF_RATIO 0.1f  // used to weight the new measurement
+#define CF_RATIO 0.95f  // gyro weight in complementary filter
 
 // Some approximate measurements
- #define MOTOR_FORCE 680.0  // youtube approx value
+ #define MOTOR_FORCE 680.0f  // youtube approx value
 //#define MOTOR_FORCE 825  // second youtube approx value
-#define ROLL_TORQUE_COEFF 0.135
-#define PITCH_TORQUE_COEFF 0.157
-#define IDEAL_VOLTAGE 12.40
+#define ROLL_TORQUE_COEFF 0.135f
+#define PITCH_TORQUE_COEFF 0.157f
+#define IDEAL_VOLTAGE 12.40f
 #define DRONE_WEIGHT 950
 
 #endif

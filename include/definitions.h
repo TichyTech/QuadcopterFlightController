@@ -17,8 +17,9 @@ inline float max(float a, float b){
 }
 
 // helpful constants
-#define TO_DEG 57.29578
-#define TO_RAD 0.01745329251
+#define PI_F 3.14159265359f
+#define TO_DEG 57.29578f
+#define TO_RAD 0.01745329251f
 
 // helpful types
 typedef Matrix<3> Vector3;
