@@ -1,7 +1,7 @@
 #ifndef DEFS
 #define DEFS 
 
-#include "BasicLinearAlgebraFix.h"
+#include <BasicLinearAlgebra.h>
 using namespace BLA;
 
 // helpful commands
