@@ -1,6 +1,6 @@
 void keyPressed() {
   if (keyCode == ENTER) {
-    sp.write(inputText);
+    sp.write(inputText + '\n');
     lastInputText = inputText;  // Save the current input text
     inputText = "";             // Clear the input field
     cursorPos = 0;              // Reset cursor position
