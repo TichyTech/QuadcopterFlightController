@@ -25,13 +25,13 @@ Controller::Controller(){
   pitch_rate_PID = PID(2, 0, 0.005, 1, 0.02, 40, "pitch");
   // yaw_rate_PID = PID(35, 5, 0, 1, 0, 0, "yaw"); 
   // yaw_rate_PID = PID(35, 0, 0.01, 0, 0.02, 40, "yaw"); 
-  yaw_rate_PID = PID(10, 0, 0.01, 0, 0.02, 40, "yaw"); 
+  yaw_rate_PID = PID(2, 0, 0.01, 0, 0.02, 40, "yaw"); 
   alt_PID = PID(50, 5, 30, 2, 0.5, 0, "alt");
 
   // For a linear system, this would yield a time constant tau = 1/P
   roll_P = 3;
   pitch_P = 3;
-  yaw_P = 2;
+  yaw_P = 0.2;
 
   motor_percentages = {0,0,0,0};
   last_PID_outputs = {0,0,0};
@@ -39,6 +39,28 @@ Controller::Controller(){
 
 void Controller::update_DCM(Matrix3 newDCM){
   DCM = newDCM;
+}
+
+/**
+ * update the PID parameters using a new config struct
+ */
+void Controller::update_PID_params(int axis, PID_config cfg){
+  switch (axis){
+    case 0:
+      roll_rate_PID.set_PID_params(cfg.P, cfg.I, cfg.D, cfg.sat, cfg.LPc);
+      break;
+    case 1:
+      pitch_rate_PID.set_PID_params(cfg.P, cfg.I, cfg.D, cfg.sat, cfg.LPc);
+      break;
+    case 2:
+      yaw_rate_PID.set_PID_params(cfg.P, cfg.I, cfg.D, cfg.sat, cfg.LPc);
+      break;
+    case 3:
+      alt_PID.set_PID_params(cfg.P, cfg.I, cfg.D, cfg.sat, cfg.LPc);
+      break;
+    default: 
+      break;
+  }
 }
 
 Vector4 Controller::update_motor_percentages(Control commands, Measurements m){

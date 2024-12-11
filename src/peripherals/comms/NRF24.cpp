@@ -34,6 +34,7 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
   msg_t msg;
   while (radio.available()) { // read latest 32 bytes
     radio.read(&msg, sizeof(msg_t)); 
+    if (DEBUG) Serial.println("MSG");
     if (msg.type == 0){ // control message received
       ctrl_msg_count ++;
       last_ctrl_msg = millis(); 
@@ -41,7 +42,7 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
       new_ctrl_msg = msg.data.ctrl_data; 
     }
     else if (msg.type == 1){ // config message received
-      Serial.println("config received");
+      if (DEBUG) Serial.println("config received");
       config_msg_t new_config = msg.data.config_data;
       if (new_config.axis == 0){  // roll
         roll_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);

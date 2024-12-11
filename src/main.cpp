@@ -118,6 +118,20 @@ void loop() {  // approxx 0.85 ms per loop
   if (motors_on > 0) digitalWrite(GREENLED_PIN, HIGH);  // light up green if motors run
   else digitalWrite(GREENLED_PIN, LOW);
 
+  // handle new PID config sent from controller
+  if (comm.new_roll_config) {
+    controller.update_PID_params(0, comm.roll_config);
+    comm.new_roll_config = 0;
+  }
+  if (comm.new_pitch_config) {
+    controller.update_PID_params(1, comm.pitch_config);
+    comm.new_pitch_config = 0;
+  }
+    if (comm.new_yaw_config) {
+    controller.update_PID_params(2, comm.yaw_config);
+    comm.new_yaw_config = 0;
+  }
+
   // estimated_DCM = acc_mag2DCM(measured_values); // init DCM
   estimated_DCM = update_DCM_rejection(estimated_DCM, measured_values);  // update DCM matrix
   controller.update_DCM(estimated_DCM);
