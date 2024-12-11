@@ -9,6 +9,8 @@
 #define PRINT_COMMANDS 0
 #define DEBUG 0
 
+#define PRINT_MIN_DELAY 0
+
 RF24 radio(9,10); // CE, CSN
 
 #define POT A0
@@ -101,10 +103,9 @@ uint8_t motors_on = 0;
 bool led_on = 0;
 
 long last_cmd_t = 0;
-long last_shown = 0;
+uint32_t last_shown = 0;
 
-void loop() {
-
+void loop() {  
   Xval = (analogRead(JOYLX_PIN) - Xstart)/20.0;  // pm 12.5 degs
   Yval = (analogRead(JOYLY_PIN) - Ystart)/20.0;
   X2val = -(analogRead(JOYRX_PIN) - X2start)/20.0;  // pm 12.5 degs
@@ -146,6 +147,7 @@ void loop() {
   msg.data.ctrl_data = ctrl_msg;
   bool report = 0;
 
+
 //  Serial.println(millis() - last_cmd_t);
   if ((millis() - last_cmd_t) >= 100){
     last_cmd_t = millis();
@@ -179,9 +181,12 @@ void loop() {
 //    Serial.println("Transmit took " + String(end_time - start_time) + " microseconds");
   }
 
-  if (Serial.available() > 0){  // received serial commands
+  if (Serial.available() > 1){  // received serial commands
+    Serial.println("something there");
     String msg = Serial.readStringUntil(' ');
+    Serial.println(msg);
     if (msg == "roll" || msg == "pitch" || msg == "yaw"){  // react only if pitch or roll or yaw is seen
+      Serial.println("its a config!");
       float P = Serial.parseFloat();
       float I = Serial.parseFloat();
       float D = Serial.parseFloat();
@@ -203,17 +208,25 @@ void loop() {
         String text = "Sending yaw config: P " + String(P, 2) + ", I " + String(I, 2) + ", D " + String(D, 2) + ", sat " + String(sat, 2) + ", LPc " + String(LPc, 2);
         if (DEBUG) Serial.println(text);
       }
+      Serial.println("parsed it");
       // sent config message
       msg_t msg; 
       msg.type = 1;
       msg.data.config_data = new_config;
       bool report = 0;
       radio.stopListening(); 
-      report = radio.write(&msg, sizeof(msg_t));
+      radio.flush_tx();
+      Serial.println("sending");
+      report = radio.startWrite(&msg, sizeof(msg_t), 0); 
+      delayMicroseconds(250);
+      radio.startListening();
+      radio.flush_rx();
+//      radio.stopListening(); 
+//      report = radio.write(&msg, sizeof(msg_t));//      
+//      radio.startListening(); 
       if (report && DEBUG){
-        Serial.print("Config sent");
+        Serial.println("Config sent");
       }
-      radio.startListening(); 
     }
     
   }
@@ -223,6 +236,13 @@ void loop() {
   if(radio.available(&pipe)){
     radio.read(&tele_msg, sizeof(tele_msg)); 
     if (tele_msg.type == 0){  // state data
+
+      #if MIN_DELAY > 0  // wait at least MIN_DELAY before printing telemetry
+      uint32_t current_t = millis();
+      if (current_t - last_shown < PRINT_MIN_DELAY) return;
+      last_shown = current_t;
+      #endif
+      
       if (HUMAN_READABLE){
         char buffr[100];
         state_struct s_data = tele_msg.data.state_data; 
