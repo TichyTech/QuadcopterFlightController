@@ -24,6 +24,8 @@ int cursorPos = 0;          // Position of the cursor in the input text
 
 // Logging structure 
 DataPoints database;
+
+int serialPort = 3;
  
 void setup() {
   size(1080, 720, P3D);
@@ -33,7 +35,12 @@ void setup() {
   camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0);
   
   printArray(Serial.list());
-  String portName = Serial.list()[3];
+  if (serialPort >= Serial.list().length){
+    println("serial index out of range, exiting");
+    exit();
+    return;
+  }
+  String portName = Serial.list()[serialPort];
   sp = new Serial(this, portName, 500000);
   println("Connecting to " + portName);
   
