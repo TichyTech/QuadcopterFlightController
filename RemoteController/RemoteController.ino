@@ -9,7 +9,7 @@
 #define PRINT_COMMANDS 0
 #define DEBUG 0
 
-#define PRINT_MIN_DELAY 0
+#define PRINT_MIN_DELAY 500
 
 RF24 radio(9,10); // CE, CSN
 
@@ -181,49 +181,49 @@ void loop() {
 //    Serial.println("Transmit took " + String(end_time - start_time) + " microseconds");
   }
 
-  if (Serial.available() > 1){  // received serial commands
-    Serial.println("something there");
-    String msg = Serial.readStringUntil(' ');
-    Serial.println(msg);
-    if (msg == "roll" || msg == "pitch" || msg == "yaw"){  // react only if pitch or roll or yaw is seen
-      Serial.println("its a config!");
-      float P = Serial.parseFloat();
-      float I = Serial.parseFloat();
-      float D = Serial.parseFloat();
-      float sat = Serial.parseFloat();
-      float LPc = Serial.parseFloat();
+  if (Serial.available() > 0 && ((millis() - last_cmd_t) >= 90)){  // received serial commands
+    String serial_line = Serial.readStringUntil('\n');
+    uint8_t space_loc = serial_line.indexOf(' ');
+    String msg_type = serial_line.substring(0, space_loc);
+    if (msg_type == "roll" || msg_type == "pitch" || msg_type == "yaw"){  // react only if pitch or roll or yaw is seen
+      float serial_reading[5] = {0,0,0,0,0};
+      for (int i = 0; i < 5; i++){
+        int next_space = serial_line.indexOf(' ', space_loc + 1);
+        if (next_space == -1) next_space = serial_line.length() - 1;
+        String numero = serial_line.substring(space_loc, next_space);
+        serial_reading[i] = numero.toFloat();
+        space_loc = next_space;
+      } 
+      float P = serial_reading[0];
+      float I = serial_reading[1];
+      float D = serial_reading[2];
+      float sat = serial_reading[3];
+      float LPc = serial_reading[4];
       config_msg_t new_config;
-      if (msg == "roll"){
+      if (msg_type == "roll"){
         new_config = {P, I, D, sat, LPc, 0};
         String text = "Sending roll config: P " + String(P, 2) + ", I " + String(I, 2) + ", D " + String(D, 2) + ", sat " + String(sat, 2) + ", LPc " + String(LPc, 2);
         if (DEBUG) Serial.println(text);
       }
-      else if (msg == "pitch"){
+      else if (msg_type == "pitch"){
         new_config = {P, I, D, sat, LPc, 1};
         String text = "Sending pitch config: P " + String(P, 2) + ", I " + String(I, 2) + ", D " + String(D, 2) + ", sat " + String(sat, 2) + ", LPc " + String(LPc, 2);
         if (DEBUG) Serial.println(text);
       }
-      else if (msg == "yaw"){
+      else if (msg_type == "yaw"){
         new_config = {P, I, D, sat, LPc, 2};
         String text = "Sending yaw config: P " + String(P, 2) + ", I " + String(I, 2) + ", D " + String(D, 2) + ", sat " + String(sat, 2) + ", LPc " + String(LPc, 2);
         if (DEBUG) Serial.println(text);
       }
-      Serial.println("parsed it");
       // sent config message
       msg_t msg; 
       msg.type = 1;
       msg.data.config_data = new_config;
       bool report = 0;
       radio.stopListening(); 
-      radio.flush_tx();
-      Serial.println("sending");
-      report = radio.startWrite(&msg, sizeof(msg_t), 0); 
-      delayMicroseconds(250);
-      radio.startListening();
-      radio.flush_rx();
-//      radio.stopListening(); 
-//      report = radio.write(&msg, sizeof(msg_t));//      
-//      radio.startListening(); 
+      report = radio.write(&msg, sizeof(msg_t));
+      delayMicroseconds(250);    
+      radio.startListening(); 
       if (report && DEBUG){
         Serial.println("Config sent");
       }
