@@ -1,6 +1,6 @@
 #include "filter.h"
 
-#define DCM_REJ_K 0.01f
+#define DCM_REJ_K 0.002f
 
 Matrix3 acc_mag2DCM(Measurements m){
   // Use current measurements to construct a direction cosine matrix [North, West, Up]
