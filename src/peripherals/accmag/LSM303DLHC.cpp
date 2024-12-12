@@ -14,11 +14,8 @@ AccMag::AccMag(){
   acc_bias = {0,0,0};
   acc_timeout = 0;
   mag_timeout = 0;
-  // Vector3 mag_bias = {-2.70, 1.63, 15.55};
-  // Matrix3 mag_scale = {0.948, 0.080, -0.012, 0.008, 0.933, -0.028, -0.012, -0.028, 1.131};
-  // This is the calibration for Frame V4
-  mag_bias = {-0.54, -1.95, -13.49};
-  mag_scale = {0.941, 0.004, 0.017, 0.004, 0.931, 0.009, 0.017, 0.009, 1.143};
+  mag_scale = {0.933, 0.010, -0.004, 0.010, 0.943, -0.010, -0.004, -0.010, 1.136};
+  mag_bias = {-1.08,-1.13,7.09};  // in microtesla = 0.01 gauss
 
   last_mag_timestamp = 0;
   last_acc_timestamp = 0;
@@ -121,7 +118,7 @@ Vector3 AccMag::read_mag(){
   mag_vals(1) =  float((int16_t)(xhm << 8 | xlm));  // flip x,y sign
   mag_vals(0) =  float((int16_t)(yhm << 8 | ylm));
   mag_vals(2) = -float((int16_t)(zhm << 8 | zlm));
-  mag_vals = mag_scale*(mag_vals - mag_bias)*(MAG_FS/(2048));  // corrected readings
+  mag_vals = mag_scale*(mag_vals*(MAG_FS/(2048)) - mag_bias*0.01f);  // corrected readings
 
   last_mag_vec = mag_vals;
   return mag_vals;
