@@ -1,15 +1,17 @@
+#include <Arduino.h>
 #include <SPI.h>
 #include "printf.h"
 #include <RF24.h>
 #include <nRF24L01.h>
 
+#include "serial_comm.h"
 #include "comm_structs.h"
 
 #define HUMAN_READABLE 0
 #define PRINT_COMMANDS 0
 #define DEBUG 0
 
-#define PRINT_MIN_DELAY 500
+#define PRINT_MIN_DELAY 0
 
 RF24 radio(9,10); // CE, CSN
 
