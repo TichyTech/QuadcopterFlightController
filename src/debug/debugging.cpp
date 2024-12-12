@@ -9,6 +9,27 @@ void printVec3(Vector3 v, uint8_t precision){
   Serial.print(' ');
 }
 
+/**
+ * to be used with motionCal.exe which demands these exact scalings for calibration
+ */
+void printSensorsCalib(Measurements m){
+  Serial.print("Raw:");
+    printVec3commas(m.acc_vec, 8192.0f);
+    Serial.print(',');
+    printVec3commas(m.gyro_vec, 16.0f);
+    Serial.print(',');
+    printVec3commas(m.mag_vec, 1000.0);
+    Serial.println();
+}
+
+void printVec3commas(Vector3 v, float scale){
+  Serial.print(int(v(0)*scale));
+  Serial.print(',');
+  Serial.print(int(v(1)*scale));
+  Serial.print(',');
+  Serial.print(int(v(2)*scale));
+}
+
 void printVec4(Vector4 v, uint8_t precision){
   Serial.print(v(0), precision);
   Serial.print(' ');
