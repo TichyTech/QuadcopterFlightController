@@ -1,3 +1,5 @@
+#include "comm_structs.h"
+
 void format_state(state_struct s_data, char* buffr, size_t bsize){
 
   float r = angle_to_float(s_data.roll);
