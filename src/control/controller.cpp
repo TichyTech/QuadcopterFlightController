@@ -77,7 +77,7 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
 
   des_rates(0) = constrain(des_rates(0), -150, 150);
   des_rates(1) = constrain(des_rates(1), -150, 150);
-  des_rates(2) = constrain(des_rates(2), -180, 180);
+  des_rates(2) = constrain(des_rates(2), -90, 90);
 
   forces(0) = roll_rate_PID.process( des_rates(0), m.gyro_vec(0), dt);
   forces(1) = pitch_rate_PID.process(des_rates(1), m.gyro_vec(1), dt);

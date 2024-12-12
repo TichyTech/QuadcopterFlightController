@@ -20,7 +20,7 @@
 // Settings
 #define SAFETY 1  // set safe mode
 #define TELEMETRY 1 
-#define DEBUG 1 // enable debugging messages
+#define DEBUG 0 // enable debugging messages
 
 // Timeout settings
 #define COMMAND_TIMEOUT_MS 60000  // 60000 ms
