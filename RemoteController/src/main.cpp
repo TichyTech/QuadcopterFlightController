@@ -6,32 +6,9 @@
 
 #include "serial_comm.h"
 #include "comm_structs.h"
-
-#define HUMAN_READABLE 0
-#define PRINT_COMMANDS 0
-#define DEBUG 0
-
-#define PRINT_MIN_DELAY 0
+#include "config.h"
 
 RF24 radio(9,10); // CE, CSN
-
-#define POT A0
-
-#define JOYLB_PIN A1
-#define JOYLX_PIN A2
-#define JOYLY_PIN A3
-
-#define JOYRX_PIN A6
-#define JOYRY_PIN A7
-
-#define BUTTON_R 2
-#define BUTTON_L 3
-#define SWITCH 4
-
-#define LED1 5
-#define LED2 6
-#define LED3 7
-#define WSLED 8
 
 #include <FastLED.h>
 CRGB leds[1];
@@ -45,21 +22,8 @@ int16_t X2start;
 int16_t Y2start;
 
 void setup() {
-  pinMode(POT, INPUT);
-  pinMode(JOYLB_PIN, INPUT);
-  pinMode(JOYLY_PIN, INPUT);
-  pinMode(JOYLX_PIN, INPUT);
-  pinMode(JOYRY_PIN, INPUT);
-  pinMode(JOYRX_PIN, INPUT);
-  pinMode(BUTTON_L, INPUT);
-  pinMode(BUTTON_R, INPUT);
-  pinMode(SWITCH, INPUT);
-
-  pinMode(LED1, OUTPUT);
-  pinMode(LED2, OUTPUT);
-  pinMode(LED3, OUTPUT);
-  pinMode(WSLED, OUTPUT);
-  FastLED.addLeds<WS2812B, WSLED, GRB>(leds, 1);  // GRB ordering is typical
+  
+  FastLED.addLeds<WS2812B, WSLED_PIN, GRB>(leds, 1);  // GRB ordering is typical
 
   Xstart = analogRead(JOYLX_PIN);
   Ystart = analogRead(JOYLY_PIN);
@@ -112,28 +76,28 @@ void loop() {
   Yval = (analogRead(JOYLY_PIN) - Ystart)/20.0;
   X2val = -(analogRead(JOYRX_PIN) - X2start)/20.0;  // pm 12.5 degs
   Y2val = -(analogRead(JOYRY_PIN) - Y2start)/20.0;
-  Tval = (analogRead(POT))/1024.0;
+  Tval = (analogRead(POT_PIN))/1024.0;
 
-  if (digitalRead(BUTTON_L) && !button1_state){ 
+  if (digitalRead(BUTTON_L_PIN) && !button1_state){ 
     button1_state = 1;
   }
-  if (!digitalRead(BUTTON_L) && button1_state){
+  if (!digitalRead(BUTTON_L_PIN) && button1_state){
     button1_state = 0;
     motors_mode = 1 + ((motors_mode) % 5);
     if (DEBUG) Serial.println("Left button pressed");
   }
   
-  if (digitalRead(BUTTON_R) && !button2_state){ 
+  if (digitalRead(BUTTON_R_PIN) && !button2_state){ 
     button2_state = 1;
   }
-  if (!digitalRead(BUTTON_R) && button2_state){
+  if (!digitalRead(BUTTON_R_PIN) && button2_state){
     button2_state = 0;
     motors_on = !motors_on;
     if (DEBUG) Serial.println("Right button pressed");
   }
 
-  analogWrite(LED1, int(256*Xval/30));
-  analogWrite(LED2, int(256*Yval/30));
+  analogWrite(LED1_PIN, int(256*Xval/30));
+  analogWrite(LED2_PIN, int(256*Yval/30));
 
   leds[0] = CHSV(0, 255, int(64*!(motors_on)));
   FastLED.show();
@@ -147,19 +111,13 @@ void loop() {
   msg_t msg; 
   msg.type = 0;
   msg.data.ctrl_data = ctrl_msg;
-  bool report = 0;
-
 
 //  Serial.println(millis() - last_cmd_t);
   if ((millis() - last_cmd_t) >= 100){
     last_cmd_t = millis();
     radio.stopListening(); 
     radio.flush_tx();
-    long start_time = micros();
-//    report = radio.write(&msg, sizeof(msg_t), 0);       // 800 usec
-//    bool report = radio.writeFast(&payload, sizeof(payload));       // 700 usec
-    report = radio.startWrite(&msg, sizeof(msg_t), 0); 
-    long end_time = micros();
+    bool report = radio.startWrite(&msg, sizeof(msg_t), 0); 
     delayMicroseconds(250);
     radio.startListening();
     radio.flush_rx();
