@@ -7,6 +7,8 @@ void printVec3(Vector3 v, uint8_t precision);
 void printSensorsCalib(Measurements m);
 void printVec3commas(Vector3 v, float scale);
 void printVec4(Vector4 v, uint8_t precision);
+void printVec6(Matrix<6,1> v, uint8_t precision);
+void printVec7(Matrix<7,1> v, uint8_t precision);
 void printState(State state, uint8_t precision);
 void printMeasurement(Measurements m, uint8_t precision);
 void printControlMessage(ctrl_msg_t msg, uint8_t precision);

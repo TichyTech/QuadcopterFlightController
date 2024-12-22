@@ -41,6 +41,20 @@ void printVec4(Vector4 v, uint8_t precision){
   Serial.print(' ');
 }
 
+void printVec6(Matrix<6,1> v, uint8_t precision){
+  for (int i = 0; i < 6; i++){
+    Serial.print(v(i), precision);
+    Serial.print(' ');
+  }
+}
+
+void printVec7(Matrix<7,1> v, uint8_t precision){
+  for (int i = 0; i < 7; i++){
+    Serial.print(v(i), precision);
+    Serial.print(' ');
+  }
+}
+
 void printState(State state, uint8_t precision){
   Serial.print(state.roll, precision);
   Serial.print(' ');
