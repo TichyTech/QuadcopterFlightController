@@ -1,6 +1,7 @@
 #include "config.h"
 #include "peripherals/writeReg.h"
 #include "definitions.h"
+#include "debug/debugging.h"
 
 class Gyro{
 
