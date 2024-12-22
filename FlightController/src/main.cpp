@@ -13,6 +13,7 @@
 
 #include "control/controller.h"
 #include "control/filter.h"
+#include "control/kalman_filter/kalman.h"
 #include "peripherals/motors/motors.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,6 +31,8 @@ uint32_t motors_on = 0;
 Sensors sensors = Sensors();
 Communication comm = Communication(); 
 Controller controller = Controller();
+KalmanFilter k_filter = KalmanFilter();
+
 
 void setup() {
   // Start serial
@@ -75,6 +78,7 @@ void setup() {
 
   // start of the control loop
   estimated_DCM = acc_mag2DCM(measured_values); // init DCM
+  k_filter.init_quat(estimated_DCM);  // correct initialization of quaternion from DCM matrix
   current_state = compute_state(estimated_DCM, measured_values);  // initial state for reference
   initial_yaw = current_state.yaw;  // store initial yaw for control
   start_time = millis();
@@ -133,7 +137,36 @@ void loop() {  // approxx 0.85 ms per loop
   }
 
   // estimated_DCM = acc_mag2DCM(measured_values); // init DCM
-  estimated_DCM = update_DCM_rejection(estimated_DCM, measured_values);  // update DCM matrix
+  // estimated_DCM = update_DCM_rejection(estimated_DCM, measured_values);  // update DCM matrix
+  // controller.update_DCM(estimated_DCM);
+  Vector4 q;
+  q = k_filter.predict(measured_values.gyro_vec, measured_values.integration_period);
+
+  if (loop_counter == 0){
+    Serial.println(millis() - start_time);
+    Serial.print("gyro: ");
+    printVec3(measured_values.gyro_vec, 4);
+    Serial.println();
+    Serial.print("predicted: ");
+    printVec4(q, 4);
+    Serial.println();
+  }
+  q = k_filter.correct(normalize(measured_values.acc_vec), normalize(measured_values.mag_vec));
+  if (loop_counter == 0){
+    Serial.print("acc: ");
+    printVec3(measured_values.acc_vec, 4);
+    Serial.println();
+    Serial.print("mag: ");
+    printVec3(normalize(measured_values.mag_vec), 4);
+    Serial.println();
+    Serial.print("corrected: ");
+    printVec4(q, 4);
+    Serial.println();
+    loop_counter = 0;
+  }
+  loop_counter ++;
+  if (loop_counter = 1) loop_counter = 0;
+  estimated_DCM = k_filter.quat2R(q);
   controller.update_DCM(estimated_DCM);
   control_action = controller.update_motor_percentages(ctrl_commands, measured_values);
 
