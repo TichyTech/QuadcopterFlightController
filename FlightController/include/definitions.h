@@ -7,9 +7,12 @@ using namespace BLA;
 // helpful commands
 #define NOP __asm__("nop");  // 0.0108 us (at pico base frequency)
 
+/**
+ * The signum function sgn(x) = -1 if x < 0, else 1
+ */
 template <typename T>
 inline int sgn(T x){
-  return x < 0 ? -1 : (x > 0 ? 1 : 0);
+  return x < 0 ? -1 : 1;
 }
 
 inline float max(float a, float b){
@@ -22,9 +25,9 @@ inline float max(float a, float b){
 #define TO_RAD 0.01745329251f
 
 // helpful types
-typedef Matrix<3> Vector3;
-typedef Matrix<4> Vector4;
-typedef Matrix<3, 3> Matrix3;
+using Vector3 = Matrix<3>;
+using Vector4 = Matrix<4>;
+using Matrix3 = Matrix<3, 3>;
 
 const Vector4 zero_4vector = {0,0,0,0};
 const Vector3 zero_3vector = {0,0,0};
