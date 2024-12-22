@@ -3,7 +3,10 @@
 
 #include "definitions.h"
 
-const Matrix3 I = {1,0,0,0,1,0,0,0,1};
+const Eye<3, 3> I_3;
+const Eye<4, 4> I_4;
+const Eye<6, 6> I_6;
+const Eye<7, 7> I_7;
 
 /**
 *Map angle from [-360, 360] to [-180, 180].
@@ -19,10 +22,18 @@ inline float dot(Vector3 a, Vector3 b){
   return a(0)*b(0) + a(1)*b(1) + a(2)*b(2);
 }
 
+inline float dot(Vector4 a, Vector4 b){
+  return a(0)*b(0) + a(1)*b(1) + a(2)*b(2) + a(3)*b(3);
+}
+
 /**
 * The norm of a Vector3 variable
 */
 inline float norm(Vector3 v) {
+  return sqrt(dot(v,v));
+}
+
+inline float norm(Vector4 v) {
   return sqrt(dot(v,v));
 }
 
@@ -44,6 +55,11 @@ inline Vector3 normalize(Vector3 v){
   return v*mult;
 }
 
+inline Vector4 normalize(Vector4 v){
+  float mult = 1/norm(v);
+  return v*mult;
+}
+
 
 /**
  * Return a skew symmetric matrix created from a Vector3 variable $[v]_x$.
@@ -55,13 +71,28 @@ inline Matrix3 skew(Vector3 v){  // skew symmetric matrix
   return S;
 }
 
+/**
+ * Return the trace of a 3x3 Matrix
+*/
+inline float trace(Matrix3 A){
+  return A(0,0) + A(1,1) + A(2,2);
+}
+
+/**
+ * Return the outer product $vv^T$ of a vector v.
+ */
+inline Matrix3 outer(Vector3 v){  // skew symmetric matrix 
+  Matrix3 vvT = v*(~v);
+  return vvT;
+}
+
 
 /**
  * This function implements the Rodriguez formula for a conversion from the axis angle representation to a rotation matrix representation.
  */
 inline Matrix3 rodriguez(Vector3 axis, float angle){
   Matrix3 K = skew(axis);
-  Matrix3 R = I + K*sin(angle) + K*K*(1 - cos(angle));  // Rodriguez rotation formula
+  Matrix3 R = I_3 + K*sin(angle) + K*K*(1 - cos(angle));  // Rodriguez rotation formula
   return R;
 }
 
@@ -69,10 +100,13 @@ inline Matrix3 rodriguez(Vector3 axis, float angle){
  * Normalize the columns of a 3x3 matrix.
  */
 inline Matrix3 normalize_columns(Matrix3 A){
-  Vector3 a1,a2,a3;
-  a1 = normalize(A.Column(0));
-  a2 = normalize(A.Column(1));
-  a3 = normalize(A.Column(2));
+  Matrix<3, 1> a1,a2,a3;
+  a1 = A.Column(0);
+  a2 = A.Column(1);
+  a3 = A.Column(2);
+  a1 = normalize(a1);
+  a2 = normalize(a2);
+  a3 = normalize(a3);
   return a1 || a2 || a3;
 }
 
