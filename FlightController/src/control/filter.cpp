@@ -85,7 +85,7 @@ Vector3 get_omega(Vector3 a, Vector3 b){  // c = angle(a,b)*(a x b)/|a x b|
   Vector3 c = skew(a) * b;  // rotation axis
   float sine = norm(c);  
   if (sine < 0.01) return zero_3vector;  // for small values of sine, sin(x) ~ x, 0.01 rad ~ 0.5 degree (negligible)
-  float cosine = norm(dot(a, b));
+  float cosine = dot(a,b);
   float angle = atan2(sine, cosine);  // rotation angle
   return c * (1/sine) * angle;  // Theta * e
 }
