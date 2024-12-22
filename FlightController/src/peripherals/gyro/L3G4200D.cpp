@@ -14,7 +14,7 @@
 // dynamic bias compensation definitions
 #define CUTOFF_FREQUENCY (0.02f)
 #define THRESHOLD (4.0f)
-#define TIMEOUT (500)  // milliseconds 
+#define TIMEOUT (300)  // milliseconds 
 
 Gyro::Gyro(){
   gyro_bias = {0,0,0};
@@ -122,7 +122,16 @@ void Gyro::calibrate_gyro(){
     delayMicroseconds(GYRO_REFRESH_PERIOD*1000000 + 100);
   }
   gyro_bias = data;
+  Vector3 gyro_sigma = {0,0,0}; 
+  for (int i = 0; i < 100; i ++){
+    Vector3 meas = read_gyro();
+    Vector3 squares = {meas(0)*meas(0), meas(1)*meas(1), meas(2)*meas(2)};
+    gyro_sigma += squares/(99.0f);
+    delayMicroseconds(GYRO_REFRESH_PERIOD*1000000 + 100);
+  }
+  Serial.print("Gyro sigma: ");
+  printVec3(gyro_sigma, 2);
   // printVec3(gyro_bias, 3);
   Serial.println("Gyro calibrated");
-  bias_compensation_on = 1;  // turn on dynamic bias compensation from here onward
+  bias_compensation_on = 0;  // turn on dynamic bias compensation from here onward
 }
