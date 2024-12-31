@@ -91,6 +91,7 @@ void setup1(){
 }
 
 uint16_t loop_counter = 0;
+Vector3 gyro_avg = {0,0,0};
 
 void loop() {  // approxx 0.85 ms per loop 
   while(digitalRead(SWITCH_PIN)) {  // stop motors and blink red LED if switch is on
@@ -141,17 +142,22 @@ void loop() {  // approxx 0.85 ms per loop
   // controller.update_DCM(estimated_DCM);
   Vector4 q;
   q = k_filter.predict(measured_values.gyro_vec, measured_values.integration_period);
+  gyro_avg = 0.995f*gyro_avg + 0.005f*measured_values.gyro_vec;
 
   if (loop_counter == 0){
     Serial.println(millis() - start_time);
     Serial.print("gyro: ");
     printVec3(measured_values.gyro_vec, 4);
     Serial.println();
+    Serial.print("gyro_avg: ");
+    printVec3(gyro_avg, 4);
+    Serial.println();
     Serial.print("predicted: ");
     printVec4(q, 4);
     Serial.println();
   }
-  q = k_filter.correct(normalize(measured_values.acc_vec), normalize(measured_values.mag_vec));
+  q = k_filter.fuse_acc(normalize(measured_values.acc_vec));
+  q = k_filter.fuse_mag(normalize(measured_values.acc_vec), normalize(measured_values.mag_vec));
   if (loop_counter == 0){
     Serial.print("acc: ");
     printVec3(measured_values.acc_vec, 4);
