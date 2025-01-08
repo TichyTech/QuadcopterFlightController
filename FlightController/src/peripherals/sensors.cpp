@@ -82,8 +82,8 @@ Measurements Sensors::get_measurements_filtered(){
 
 float Sensors::update_integration_period(){
   // first integration period is invalid!!
-  static unsigned long last_timestamp = 0;  
-  unsigned long current_timestamp = micros();
+  static uint32_t last_timestamp = 0;  
+  uint32_t current_timestamp = micros();
   float integration_period = float(current_timestamp - last_timestamp)*(1/1000000.0);
   last_timestamp = current_timestamp;
   return integration_period;
