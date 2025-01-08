@@ -5,8 +5,10 @@
 #define GYRO_ADR 0x69
 // #define DPS_PER_LSB 0.01526  // for +-500 dps FS assuming 16 bits of data
 #define DPS_PER_LSB 0.0610351f  // for +- 2000 dps FS
-#define ROLL_MULT 1.139f  // sensitivity calibration 
-#define PITCH_MULT 1.166f  // sensitivity calibration 
+// #define ROLL_MULT 1.139f  // sensitivity calibration complementary
+#define ROLL_MULT 1.1723333f  // sensitivity calibration EKF
+// #define PITCH_MULT 1.166f  // sensitivity calibration complementary
+#define PITCH_MULT 1.21134444444f  // sensitivity calibration EKF
 #define YAW_MULT 1.1556f  // sensitivity calibration 
 #define GYRO_REFRESH_RATE 800.0f  // for 800 Hz
 #define GYRO_REFRESH_PERIOD (1.0f/GYRO_REFRESH_RATE) // in seconds
