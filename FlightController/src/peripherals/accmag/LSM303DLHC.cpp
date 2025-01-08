@@ -158,7 +158,7 @@ void AccMag::calibrate_acc(){  // sensor needs to be perpendicular to gravity ve
   for (int i = 0; i < 100; i ++){
     Vector3 meas = read_acc() - grav_dir;
     Vector3 squares = {meas(0)*meas(0), meas(1)*meas(1), meas(2)*meas(2)};
-    acc_sigma += squares/(99.0f);
+    acc_sigma += squares*(1.0f/99.0f);
     delayMicroseconds(ACC_REFRESH_PERIOD + 100);
   }
   Serial.print("Acc sigma: ");
