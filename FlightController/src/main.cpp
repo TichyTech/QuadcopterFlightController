@@ -90,8 +90,6 @@ void setup() {
   current_state = compute_state(estimated_DCM, measured_values);  // initial state for reference
   initial_yaw = current_state.yaw;  // store initial yaw for control
   start_time = millis();
-
-  gyro_avg = measured_values.gyro_vec;
 }
 
 void setup1(){
