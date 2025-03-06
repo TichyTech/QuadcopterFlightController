@@ -38,6 +38,36 @@ inline float norm(Vector4 v) {
 }
 
 /**
+ * find the maximum entry in a matrix
+ */
+inline float max_norm(Matrix<7,7> A){
+  float max_float = 0;
+
+  for (int i = 0; i < 7; i++){
+    for (int j = 0; j < 7; j++){
+      if (A(i,j) > max_float) max_float = A(i,j);
+    }
+  }
+
+  return max_float;
+}
+
+/**
+ * find the minimum entry in a matrix
+ */
+inline float min_norm(Matrix<7,7> A){
+  float min_float = 0;
+
+  for (int i = 0; i < 7; i++){
+    for (int j = 0; j < 7; j++){
+      if (A(i,j) < min_float) min_float = A(i,j);
+    }
+  }
+
+  return min_float;
+}
+
+/**
 * The determinant of a 3x3 matrix.
 */
 inline float det(Matrix3 A){
