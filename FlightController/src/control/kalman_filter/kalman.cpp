@@ -121,6 +121,7 @@ Vector4 KalmanFilter::predict(Vector3 gyro_vec, float dt){
   float bias_var = BIAS_VAR*dt;
   if (gyro_steady()) bias_var = (STEADY_BIAS_VAR_MULT*BIAS_VAR)*dt;  // increase the variance a bit 
   Q.Submatrix<3,3>(4,4) = I_3 * bias_var;  // init small process variance for bias
+  Q = Q + I_7*(1e-5f*dt);  // baseline process noise
 
   q = F11*q;  // predict quaternion
   P = F*P*(~F) + Q;  // predict covariance
@@ -154,6 +155,10 @@ Vector4 KalmanFilter::fuse_mag(Vector3 m){
   Matrix<3,3> S_cp = S;
   CholeskyDecomposition LLT = CholeskyDecompose(S_cp);  // Decompose the matrix LL^T
 
+  if (!LLT.positive_definite){  // rather return right away and crash the drone :D
+    Vector4 ret = {infinity, infinity, infinity, infinity};
+  }
+
   // Kalman gain multiplied by S
   Matrix<7, 3> KS = P*~H;  // K = PH^TS^-1, KS = PH^T
   // S\H computation
@@ -171,8 +176,9 @@ Vector4 KalmanFilter::fuse_mag(Vector3 m){
   Vector4 inn_q = innovation.Submatrix<4,1>(0,0);  // quaternion innovation
   Vector3 inn_b = innovation.Submatrix<3,1>(4,0);  // bias innovation
 
+  inn_q = clamp_innovation(inn_q, q);  // restrict quat innovations to small, orthogonal
   q = normalize(q + inn_q);  // add innovation and renormalize
-  b = b + inn_b;  // always use smaller step for magnetometer bias estimation
+  b = b + 0.05*inn_b;  // always use smaller step for magnetometer bias estimation
 
   return q;
 }
@@ -202,6 +208,10 @@ Vector4 KalmanFilter::fuse_acc(Vector3 a){
   Matrix<3,3> S_cp = S;
   CholeskyDecomposition LLT = CholeskyDecompose(S_cp);  // Decompose the matrix LL^T
 
+  if (!LLT.positive_definite){  // rather return right away and crash the drone :D
+    Vector4 ret = {infinity, infinity, infinity, infinity};
+  }
+
   // Kalman gain multiplied by S
   Matrix<7, 3> KS = P*~H;  // K = PH^TS^-1, KS = PH^T
   // S\H computation
@@ -220,11 +230,48 @@ Vector4 KalmanFilter::fuse_acc(Vector3 a){
   Vector4 inn_q = innovation.Submatrix<4,1>(0,0);  // quaternion innovation
   Vector3 inn_b = innovation.Submatrix<3,1>(4,0);  // bias innovation
 
+  inn_q = clamp_innovation(inn_q, q);  // restrict quat innovations to small, orthogonal
   q = normalize(q + inn_q);  // add innovation and renormalize
   if(acc_steady()) b = b + inn_b;  // if acc not steady, use smaller step
   else b = b + 0.05f*inn_b;
 
   return q;
+}
+
+float KalmanFilter::get_P_max()
+{
+    return max_norm(P);
+}
+
+float KalmanFilter::get_P_min()
+{
+    return min_norm(P);
+}
+
+/**
+ * Clamp the state variance matrix to reasonable range
+ */
+float KalmanFilter::clamp_variance()
+{
+  float max_entry = max_norm(P);
+  if (max_entry > 2.0f) {
+    float mult = 2.0f/max_entry;  // variance 2.0 is already too much probably
+    P = mult*P;
+  }
+  return max_entry;
+}
+
+/**
+ * Clamp the quaternion innovation vector to be tangent to unit sphere and less than 0.5 in magnitude
+ */
+Vector4 KalmanFilter::clamp_innovation(Vector4 inn_q, Vector4 q)
+{
+    Vector4 t_inn_q = inn_q - dot(inn_q, q)*q;  // remove component parallel to q
+    float t_inn_q_norm = norm(t_inn_q);
+    if (t_inn_q_norm > 0.5) {
+      t_inn_q = t_inn_q * (0.5f / t_inn_q_norm);  // normalize to length 0.5
+    }
+    return t_inn_q;
 }
 
 /**
@@ -234,6 +281,6 @@ Matrix3 KalmanFilter::quat2R(Vector4 q){
   float q0 = q(0);  // scalar part
   Vector3 v = q.Submatrix<3,1>(1,0);  // vector part
   Matrix3 v_x = skew(v);  // skew symmetric from v
-  Matrix3 R = (q0*q0)*I_3 + v*~v + (2*q0)*v_x + v_x*v_x; 
+  Matrix3 R = (q0*q0)*I_3 + v*~v + (2.0f*q0)*v_x + v_x*v_x; 
   return R;
 }

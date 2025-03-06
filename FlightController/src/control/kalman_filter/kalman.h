@@ -1,5 +1,6 @@
 #include "algebra.h"
 #include "debug/debugging.h"
+#include "config.h"
 
 class KalmanFilter{
   private:
@@ -20,16 +21,20 @@ class KalmanFilter{
 
   public:
     Vector4 q;  // attitude quaternion of the world frame NWU
-    Vector3 b;  // gyro bias estimate
+    Vector3 b;  // gyro bias estimate [rad]
 
     KalmanFilter();
     void init_quat(Matrix3 DCM);  // initialize quaternion from a DCM matrix
     void track_gyro(Vector3 w, float dt);
     void track_acc(Vector3 a, float dt);
+    float clamp_variance();
     bool gyro_steady();
     bool acc_steady();
+    float get_P_max();
+    float get_P_min();
     Vector4 predict(Vector3 gyro_vec, float dt);
     Vector4 fuse_acc(Vector3 a);
     Vector4 fuse_mag(Vector3 m);
+    Vector4 clamp_innovation(Vector4 inn_q, Vector4 q);
     Matrix3 quat2R(Vector4 q);
 };
