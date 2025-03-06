@@ -154,7 +154,7 @@ void loop() {  // approxx 0.85 ms per loop
 
   if(DEBUG){
     if (isinf(q(0)) && isinf(q(1)) && isinf(q(2)) && isinf(q(3))){
-      if (--last_k == 0) {while(1){ signal_motors(zero_4vector);}}
+      while(1){ signal_motors(zero_4vector);}
     }
     if (max_val > 10.0f){  // crash the drone :(
       while(1){ signal_motors(zero_4vector);}
