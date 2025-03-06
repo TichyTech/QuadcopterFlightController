@@ -156,7 +156,7 @@ Vector4 KalmanFilter::fuse_mag(Vector3 m){
   CholeskyDecomposition LLT = CholeskyDecompose(S_cp);  // Decompose the matrix LL^T
 
   if (!LLT.positive_definite){  // rather return right away and crash the drone :D
-    Vector4 ret = {infinity, infinity, infinity, infinity};
+    return inf_4vector;
   }
 
   // Kalman gain multiplied by S
@@ -178,7 +178,7 @@ Vector4 KalmanFilter::fuse_mag(Vector3 m){
 
   inn_q = clamp_innovation(inn_q, q);  // restrict quat innovations to small, orthogonal
   q = normalize(q + inn_q);  // add innovation and renormalize
-  b = b + 0.05*inn_b;  // always use smaller step for magnetometer bias estimation
+  b = b + 0.05f*inn_b;  // always use smaller step for magnetometer bias estimation
 
   return q;
 }
@@ -209,7 +209,7 @@ Vector4 KalmanFilter::fuse_acc(Vector3 a){
   CholeskyDecomposition LLT = CholeskyDecompose(S_cp);  // Decompose the matrix LL^T
 
   if (!LLT.positive_definite){  // rather return right away and crash the drone :D
-    Vector4 ret = {infinity, infinity, infinity, infinity};
+    return inf_4vector;
   }
 
   // Kalman gain multiplied by S
