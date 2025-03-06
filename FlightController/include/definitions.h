@@ -31,6 +31,7 @@ using Matrix3 = Matrix<3, 3>;
 
 const Vector4 zero_4vector = {0,0,0,0};
 const Vector3 zero_3vector = {0,0,0};
+const Vector4 inf_4vector = {INFINITY, INFINITY, INFINITY, INFINITY};
 
 // Flight controller-used structures definitions
 
