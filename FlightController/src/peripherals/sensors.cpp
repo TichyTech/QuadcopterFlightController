@@ -14,7 +14,7 @@ float Battery::get_voltage(){
 
 float Battery::get_filtered_voltage(){
   float current_reading = get_voltage();
-  filtered_val = (ADC_TO_VOLTS * current_reading) * BATLPF_RATIO + filtered_val*(1 - BATLPF_RATIO);
+  filtered_val = current_reading * BATLPF_RATIO + filtered_val*(1 - BATLPF_RATIO);
   return filtered_val;
 }
 
@@ -45,7 +45,7 @@ void Sensors::setup(){
   
   Serial.println("All sensors ready!");
 
-  // delay(5000); //delay the calibration process a bit to allow drone to settle on the ground
+  delay(5000); //delay the calibration process a bit to allow drone to settle on the ground
   gyroscope.calibrate_gyro(); // 3 sec bias calibration
   accmag.calibrate_acc();  // 3 sec bias calibration
 }
