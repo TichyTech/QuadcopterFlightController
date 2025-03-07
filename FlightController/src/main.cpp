@@ -152,14 +152,14 @@ void loop() {  // approxx 0.85 ms per loop
   estimated_DCM = k_filter.quat2R(q);  // quat to DCM conversion
   float max_val = k_filter.clamp_variance();  // reduce variance if too big
 
-  if(DEBUG){
-    if (isinf(q(0)) && isinf(q(1)) && isinf(q(2)) && isinf(q(3))){
-      while(1){ signal_motors(zero_4vector);}
-    }
-    if (max_val > 10.0f){  // crash the drone :(
-      while(1){ signal_motors(zero_4vector);}
-    }
+  // guarding numerical stability of EKF
+  if (isinf(q(0)) && isinf(q(1)) && isinf(q(2)) && isinf(q(3))){
+    while(1){ signal_motors(zero_4vector);}
   }
+  if (max_val > 10.0f){  // crash the drone :(
+    while(1){ signal_motors(zero_4vector);}
+  }
+  
 
   controller.update_DCM(estimated_DCM);  
   control_action = controller.update_motor_percentages(ctrl_commands, measured_values); 
