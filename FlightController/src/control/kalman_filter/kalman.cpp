@@ -9,8 +9,9 @@
 // #define MAG_VAR_BASE 0.1f
 #define GYRO_VAR 0.000061f  // [rad/s]
 #define BIAS_VAR 0.0000001f  // [rad/s]
-#define ACC_VAR_BASE 0.02f
-#define MAG_VAR_BASE 0.04f
+const Vector3 ACC_VAR_BASE = {0.1, 0.18, 0.33};
+const Vector3 MAG_VAR_BASE = {0.1, 0.1, 0.1};
+
 #define MAG_INC 1.368266347647853f  // local magnetic inclination [rad]
 
 // definitions for steady state detection
@@ -30,8 +31,8 @@ KalmanFilter::KalmanFilter(){
   P.Submatrix<3,3>(4,4) = I_3 * BIAS_VAR_INIT;
 
   // gyro and acc estimated using measurement, magnetometer guessed
-  R_acc = I_3*ACC_VAR_BASE;
-  R_mag = I_3*MAG_VAR_BASE;
+  R_acc = diag_matrix(ACC_VAR_BASE);
+  R_mag = diag_matrix(MAG_VAR_BASE);
 
   a_w = {0,0,1};
   m_w = {cos(MAG_INC), 0, -sin(MAG_INC)};
@@ -68,7 +69,7 @@ void KalmanFilter::track_gyro(Vector3 w, float dt){
  */
 void KalmanFilter::track_acc(Vector3 a, float dt){
   float a_norm = norm(a);
-  if ((0.95f < a_norm) && (a_norm < 1.05f)){  // acceleration in valid range
+  if ((0.98f < a_norm) && (a_norm < 1.02f)){  // acceleration in valid range
     acc_timer += dt;
   }
   else acc_timer = 0;  // reset timer

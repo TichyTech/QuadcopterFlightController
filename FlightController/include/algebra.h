@@ -3,11 +3,6 @@
 
 #include "definitions.h"
 
-const Eye<3, 3> I_3;
-const Eye<4, 4> I_4;
-const Eye<6, 6> I_6;
-const Eye<7, 7> I_7;
-
 /**
 *Map angle from [-360, 360] to [-180, 180].
 */
