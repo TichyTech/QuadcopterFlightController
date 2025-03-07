@@ -47,6 +47,7 @@ typedef struct ctrl_msg_t{
   float yaw_diff;
   float throttle;
   uint32_t motors_on;
+  uint32_t sequence;
 } ctrl_msg_t;  // received command message
 
 typedef struct config_msg_t{

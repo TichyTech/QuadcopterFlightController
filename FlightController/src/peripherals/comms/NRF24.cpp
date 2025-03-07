@@ -2,7 +2,7 @@
 
 Communication::Communication(){
   radio = RF24(17, 20);
-  comm_timed_out = 0;
+  comm_timed_out = 1;
   new_roll_config = 0;
   new_pitch_config = 0;
   new_yaw_config = 0;
@@ -29,12 +29,14 @@ void Communication::setup_nrf(){
 
 Control Communication::update_commands(float initial_yaw){  // receive latest command message with lost signal handling
   ctrl_msg_t new_ctrl_msg;
+  static uint32_t ctrl_sequence_num = 0;
   
   bool new_command = false;
   msg_t msg;
   while (radio.available()) { // read latest 32 bytes
     radio.read(&msg, sizeof(msg_t)); 
     if (msg.type == 0){ // control message received
+      if (DEBUG) Serial.println("control received");
       ctrl_msg_count ++;
       last_ctrl_msg = millis(); 
       new_command = true;
@@ -74,6 +76,17 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
     latest_control.yaw = constrain_angle(initial_yaw + new_ctrl_msg.yaw_diff);
     latest_control.throttle = new_ctrl_msg.throttle;
     latest_control.motors_on = new_ctrl_msg.motors_on;
+    // check sequence number on the packet and compare to last seen
+    if (++ctrl_sequence_num != new_ctrl_msg.sequence) {
+      if (DEBUG){
+        Serial.print("Sequence mismatch: ");
+        Serial.print(ctrl_sequence_num);
+        Serial.print(" x ");
+        Serial.println(new_ctrl_msg.sequence);
+      }
+      ctrl_sequence_num = new_ctrl_msg.sequence;
+    }
+
   }
   return latest_control;
 };
