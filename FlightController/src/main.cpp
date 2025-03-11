@@ -34,6 +34,7 @@ Communication comm = Communication();
 Controller controller = Controller();
 KalmanFilter k_filter = KalmanFilter();
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void setup() {
   // Start serial
@@ -98,6 +99,10 @@ void setup1(){
   }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool loop_telemetry_sent = false;
+
 void loop() {  // approxx 0.85 ms per loop 
   while(digitalRead(SWITCH_PIN)) {  // stop motors and blink red LED if switch is on
     signal_motors(zero_4vector);  
@@ -152,19 +157,34 @@ void loop() {  // approxx 0.85 ms per loop
   estimated_DCM = k_filter.quat2R(q);  // quat to DCM conversion
   float max_val = k_filter.clamp_variance();  // reduce variance if too big
 
+  // printVec3(measured_values.acc_vec, 3);
+  // Serial.println();
+
   // guarding numerical stability of EKF
   if (isinf(q(0)) && isinf(q(1)) && isinf(q(2)) && isinf(q(3))){
-    while(1){ signal_motors(zero_4vector);}
+    while(1){ 
+      signal_motors(zero_4vector);
+      Serial.println("inf q");
+    }
   }
   if (max_val > 10.0f){  // crash the drone :(
-    while(1){ signal_motors(zero_4vector);}
+    while(1){ 
+      signal_motors(zero_4vector);
+      Serial.println("Q out of bounds");
+    }
   }
-  
+
+  if(DEBUG) {
+    printVec3(measured_values.gyro_vec, 2);
+    Serial.println();
+  }
 
   controller.update_DCM(estimated_DCM);  
   control_action = controller.update_motor_percentages(ctrl_commands, measured_values); 
   if (motors_on == 0) signal_motors(zero_4vector); 
   else signal_motors(control_action);
+
+  loop_telemetry_sent = false;  // set flag for sending telemetry
 }
 
 void loop1() {
@@ -178,9 +198,14 @@ void loop1() {
       telemetry_msg_t msg = comm.create_batt_telemetry(current_state, measured_values);
       comm.send_telemetry(msg);  
     }
+    
     // the following telemetry takes about 0.9 ms
-    telemetry_msg_t msg = comm.create_state_telemetry(current_state, control_action, initial_yaw, controller.last_PID_outputs);
-    comm.send_telemetry(msg);
+    if (!loop_telemetry_sent){
+      // telemetry_msg_t msg = comm.create_state_telemetry(current_state, control_action, initial_yaw, controller.last_PID_outputs);
+      telemetry_msg_t msg = comm.create_sensor_telemetry(current_state, initial_yaw, measured_values);
+      comm.send_telemetry(msg);
+      loop_telemetry_sent = true;  // only send once per control loop
+    }
   }
 
 }

@@ -1,5 +1,8 @@
 #include "serial_comm.h"
 
+/**
+ * take received state_data struct, remap values to original ranges and format into string 
+ */
 void format_state(state_struct s_data, char* buffr, size_t bsize){
 
   float r = angle_to_float(s_data.roll);
@@ -17,10 +20,46 @@ void format_state(state_struct s_data, char* buffr, size_t bsize){
 
   float all_floats[10] = {r, p, y, motors[0], motors[1], motors[2], motors[3], PID_outputs[0], PID_outputs[1], PID_outputs[2]};
 
+  // format floats into string
   snprintf(buffr, bsize, "State: %lu ",  s_data.ms);
-  char temp_b[7]; 
+  format_floats_to_buffer(buffr, all_floats, 10);
+}
+
+/**
+ * take received ekf_struct struct, remap values to original ranges and format into string 
+ */
+void format_ekf(ekf_struct ekf_data, char* buffr, size_t bsize){
+
+  float r = angle_to_float(ekf_data.roll);
+  float p = angle_to_float(ekf_data.pitch);
+  float y = angle_to_float(ekf_data.yaw);
+
+  float acc[3] = {  acc_to_float(ekf_data.acc[0]),
+                    acc_to_float(ekf_data.acc[1]),
+                    acc_to_float(ekf_data.acc[2])};
+
+  float mag[3] = {  mag_to_float(ekf_data.mag[0]),
+                    mag_to_float(ekf_data.mag[1]),
+                    mag_to_float(ekf_data.mag[2])};
+
+  float gyro[3] = { gyro_to_float(ekf_data.gyro[0]),
+                    gyro_to_float(ekf_data.gyro[1]),
+                    gyro_to_float(ekf_data.gyro[2])};
+
+  float all_floats[12] = {r, p, y, acc[0], acc[1], acc[2], mag[0], mag[1], mag[2], gyro[0], gyro[1], gyro[2]};
+
+  // format floats into string
+  snprintf(buffr, bsize, "EKF: %lu ",  ekf_data.ms);
+  format_floats_to_buffer(buffr, all_floats, 12);
+}
+
+/**
+ * add float array to string with spaces between
+ */
+void format_floats_to_buffer(char* buffr, float* all_floats, uint8_t num_floats){
+  char temp_b[16]; 
   int str_len = strlen(buffr);
-  for (int i = 0; i < 10; i++){
+  for (int i = 0; i < num_floats; i++){
     dtostrf(all_floats[i], 3, 2, temp_b);
     int float_len = strlen(temp_b);
     for (int j = 0; j < float_len; j++){
@@ -29,11 +68,12 @@ void format_state(state_struct s_data, char* buffr, size_t bsize){
     buffr[str_len + float_len] = ' ';  // set a space
     buffr[str_len + float_len + 1] = '\0';  // set a string end char
     str_len += float_len + 1;
-//    strcat(buffr, temp_b);
-//    strcat(buffr, " ");
   }
 }
 
+/**
+ * Interpret telemetry message and print it to serial in either human readable or binary format
+ */
 void print_message_to_serial(telemetry_msg_t tele_msg){
   static uint32_t last_shown = 0;
   if (tele_msg.type == 0){  // state data
@@ -51,10 +91,19 @@ void print_message_to_serial(telemetry_msg_t tele_msg){
     }
     else Serial.write((uint8_t*)&tele_msg, sizeof(tele_msg));
   }
-  if (tele_msg.type == 1){  // sensor data
+  else if (tele_msg.type == 1){  // sensor data
+    // if (HUMAN_READABLE){
+    //     sensor_struct s_data = tele_msg.data.sensor_data;
+    //     Serial.println("Telemetry: " + String(s_data.battery) + " " + String(s_data.height));
+    // }
+    // else Serial.write((uint8_t*)&tele_msg, sizeof(tele_msg));
+  }
+  else if (tele_msg.type == 2){  // ekf data
     if (HUMAN_READABLE){
-        sensor_struct s_data = tele_msg.data.sensor_data;
-        Serial.println("Telemetry: " + String(s_data.battery) + " " + String(s_data.height));
+        char buffr[160];
+        ekf_struct ekf_data = tele_msg.data.ekf_data; 
+        format_ekf(ekf_data, buffr, sizeof(buffr));  
+        Serial.println(buffr);  
     }
     else Serial.write((uint8_t*)&tele_msg, sizeof(tele_msg));
   }

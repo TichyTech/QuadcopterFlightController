@@ -3,6 +3,8 @@
 
 void format_state(state_struct s_data, char *buffr, size_t bsize);
 
+void format_floats_to_buffer(char *buffr, float *all_floats, uint8_t num_floats);
+
 void print_message_to_serial(telemetry_msg_t tele_msg);
 
 bool parse_serial(msg_t &msg);

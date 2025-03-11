@@ -36,14 +36,14 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
   while (radio.available()) { // read latest 32 bytes
     radio.read(&msg, sizeof(msg_t)); 
     if (msg.type == 0){ // control message received
-      if (DEBUG) Serial.println("control received");
+      // if (DEBUG) Serial.println("control received");
       ctrl_msg_count ++;
       last_ctrl_msg = millis(); 
       new_command = true;
       new_ctrl_msg = msg.data.ctrl_data; 
     }
     else if (msg.type == 1){ // config message received
-      if (DEBUG) Serial.println("config received");
+      // if (DEBUG) Serial.println("config received");
       config_msg_t new_config = msg.data.config_data;
       if (new_config.axis == 0){  // roll
         roll_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
@@ -78,12 +78,12 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
     latest_control.motors_on = new_ctrl_msg.motors_on;
     // check sequence number on the packet and compare to last seen
     if (++ctrl_sequence_num != new_ctrl_msg.sequence) {
-      if (DEBUG){
-        Serial.print("Sequence mismatch: ");
-        Serial.print(ctrl_sequence_num);
-        Serial.print(" x ");
-        Serial.println(new_ctrl_msg.sequence);
-      }
+      // if (DEBUG){
+      //   Serial.print("Sequence mismatch: ");
+      //   Serial.print(ctrl_sequence_num);
+      //   Serial.print(" x ");
+      //   Serial.println(new_ctrl_msg.sequence);
+      // }
       ctrl_sequence_num = new_ctrl_msg.sequence;
     }
 
@@ -124,9 +124,40 @@ telemetry_msg_t Communication::create_batt_telemetry(State state, Measurements m
   return msg;
 }
 
+telemetry_msg_t Communication::create_sensor_telemetry(State state, float init_yaw, Measurements measured_values){
+  ekf_struct data;
+  data.ms = millis();
+  data.roll = angle_to_int(state.roll);
+  data.pitch = angle_to_int(state.pitch);
+  // data.yaw = current_state.yaw;
+  data.yaw = angle_to_int(constrain_angle(state.yaw - init_yaw));  // send yaw difference instead of yaw
+  
+  data.acc[0] = acc_to_int(measured_values.acc_vec(0));
+  data.acc[1] = acc_to_int(measured_values.acc_vec(1));
+  data.acc[2] = acc_to_int(measured_values.acc_vec(2));
+
+  data.mag[0] = mag_to_int(measured_values.mag_vec(0));
+  data.mag[1] = mag_to_int(measured_values.mag_vec(1));
+  data.mag[2] = mag_to_int(measured_values.mag_vec(2));
+
+  data.gyro[0] = gyro_to_int(measured_values.gyro_vec(0));
+  data.gyro[1] = gyro_to_int(measured_values.gyro_vec(1));
+  data.gyro[2] = gyro_to_int(measured_values.gyro_vec(2));
+
+  telemetry_msg_t msg;
+  msg.data.ekf_data = data;
+  msg.type = 2;
+  return msg;
+}
+
 void Communication::send_telemetry(telemetry_msg_t msg){
   radio.stopListening(); 
-  bool report = radio.write(&msg, sizeof(telemetry_msg_t));  // send message
+  // radio.flush_tx();
+  // bool report = radio.startWrite(&msg, sizeof(msg), 0); 
+  // delayMicroseconds(500);
+  // radio.startListening();
+  // radio.flush_rx();
+  bool report = radio.write(&msg, sizeof(msg)); 
   if (report & (msg.type == 1)) ctrl_msg_count = 0;  // reset counter on success, else try again next loop
   radio.startListening(); 
 }

@@ -28,6 +28,7 @@ class Communication{
     void setup_nrf();
     Control update_commands(float initial_yaw);
     telemetry_msg_t create_state_telemetry(State state, Vector4 control, float init_yaw, Vector3 PID_outputs);
+    telemetry_msg_t create_sensor_telemetry(State state, float init_yaw, Measurements measured_values);
     telemetry_msg_t create_batt_telemetry(State state, Measurements m);
     void send_telemetry(telemetry_msg_t msg);
 

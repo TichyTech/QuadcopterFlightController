@@ -6,8 +6,14 @@
 /// Data transformations for transmission purposes
 #define ANGLE_FS 180.0f
 #define FORCE_FS 200.0f
+#define GYRO_TELEM_FS 720.0f
+#define ACC_TELEM_FS 2.0f
+#define MAG_TELEM_FS 1.3f
+
 #define MAX_15BIT 32767.0f
 #define MAX_16BIT 65535.0f
+
+// State struct conversions
 
 /* Transform a float angle [-180, 180] to 16 bit int representation for transmitting */
 inline int16_t angle_to_int(float angle){
@@ -36,7 +42,33 @@ inline int16_t force_to_int(float force){
 
 /* Transform PID output from int [0, 2^15 - 1] to float [-FS, FS]*/
 inline float force_to_float(int16_t force){
-  return float (force) * (FORCE_FS / MAX_15BIT);  // * FS / (2^15 - 1)
+  return float(force) * (FORCE_FS / MAX_15BIT);  // * FS / (2^15 - 1)
+}
+
+// sensor struct conversions
+
+inline int16_t gyro_to_int(float gyro){
+  return int16_t(gyro * (MAX_15BIT / GYRO_TELEM_FS));
+}
+
+inline float gyro_to_float(int16_t gyro){
+  return float(gyro) * (GYRO_TELEM_FS / MAX_15BIT);
+}
+
+inline int16_t acc_to_int(float acc){
+  return int16_t(acc * (MAX_15BIT / ACC_TELEM_FS));
+}
+
+inline float acc_to_float(int16_t acc){
+  return float(acc) * (ACC_TELEM_FS / MAX_15BIT);
+}
+
+inline int16_t mag_to_int(float mag){
+  return int16_t(mag * (MAX_15BIT / MAG_TELEM_FS));
+}
+
+inline float mag_to_float(int16_t mag){
+  return float(mag) * (MAG_TELEM_FS / MAX_15BIT);
 }
 
 // Data structs for communication
@@ -69,7 +101,7 @@ typedef struct msg_t{
   } data;
 } msg_t;
 
-typedef struct state_struct{  // 18 bytes
+typedef struct state_struct{  // 24 bytes
   uint32_t ms;
   int16_t roll;
   int16_t pitch;
@@ -83,12 +115,23 @@ typedef struct sensor_struct{  // 8 bytes
   float height;
 } sensor_struct;  // received command message
 
+typedef struct ekf_struct{  // 28 bytes
+  uint32_t ms;
+  int16_t roll;
+  int16_t pitch;
+  int16_t yaw;
+  int16_t acc[3];
+  int16_t mag[3];
+  int16_t gyro[3];
+} ekf_struct;  // received command message
+
 typedef struct telemetry_msg_t{  // 32 bytes
   uint32_t type;  // state message, sensor_message
   union U{
     byte bytes [28];
     sensor_struct sensor_data;
     state_struct state_data; 
+    ekf_struct ekf_data;
   } data;
 } telemetry_msg_t;
 
