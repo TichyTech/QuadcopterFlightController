@@ -10,12 +10,22 @@ float mean_msg = 0;
 
 Serial sp;
 byte[] buff = new byte[256];
+
+// telemetry variables
 float[] RPY = new float[3];
 float[] motor_percentages = new float[4];
 float[] forces = new float[3];
 long ms;
+
+// battery telemetry
 float altitude = 0;
 float battery = 0;
+
+// sensor telemetry
+float[] acc = new float[3];
+float[] mag = new float[3];
+float[] gyro = new float[3];
+
 
 // Command line variables
 String inputText = "";        // Store the current input text
@@ -24,8 +34,9 @@ int cursorPos = 0;          // Position of the cursor in the input text
 
 // Logging structure 
 DataPoints database;
+SensorDataPoints sensor_database;
 
-int serialPort = 3;
+int serialPort = 2;
  
 void setup() {
   size(1080, 720, P3D);
@@ -45,6 +56,7 @@ void setup() {
   println("Connecting to " + portName);
   
   database = new DataPoints(2048);
+  sensor_database = new SensorDataPoints(2048);
   wait_for_setup();
 }
    
@@ -72,6 +84,7 @@ void draw() {
     popMatrix();
     //drawText(mystr, 200, 50);
     drawState(RPY, 50, 20);
+    drawSensors(acc, mag, gyro, 800, 80);
     drawMP(motor_percentages, 200, 20);
     drawForces(forces, 200, 60);
     drawTelemetry(altitude, battery, 460, 20);

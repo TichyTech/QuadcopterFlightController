@@ -30,6 +30,7 @@ void keyPressed() {
   
   else if (keyCode == '-'){
     database.save_to_file();
+    sensor_database.save_to_file();
   }
   
   // Handle other keys: add typed character to the input text

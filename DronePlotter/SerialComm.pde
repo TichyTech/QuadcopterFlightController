@@ -32,6 +32,12 @@ void handle_serial_gibberish(){
       num_messages++;
       new_messages++;
     }
+    else if(msg_type == 2){
+      loadValsSensorGibberish(buffer_wrapped);
+      sensor_database.add_datapoint(RPY, acc, mag, gyro, ms);
+      num_messages++;
+      new_messages++;
+    }
 
     if (sp.available() >= 32){
       numBytes = sp.readBytes(buffer); // try reading bytes from serial

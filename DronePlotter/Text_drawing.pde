@@ -31,6 +31,44 @@ void drawState(float[] RPY, int x, int y){
   colorMode(RGB, 1);
 }
 
+void drawSensors(float[] acc, float[] mag, float[] gyro, int x, int y){
+  fill(1);
+  stroke(0);
+  strokeWeight(2);
+  rect(x, y, 180, 130, 10);  // Rounded rectangle
+
+  // Display the text
+  fill(0);
+  textSize(20);
+  textAlign(CENTER, CENTER);
+  String[] names = {"Acc:", "Mag:", "Gyro:"};    
+
+  colorMode(HSB, 1);
+  fill(1, 1, 0);
+  textAlign(LEFT, CENTER);
+  text("Acc:", x + 5, y + 25);
+  for (int i = 0; i < 3; i ++){
+    textAlign(RIGHT, CENTER);
+    text(String.format("%.2f", acc[i]), x + 40, y + 45 + i*30);
+  }
+
+  textAlign(LEFT, CENTER);
+  text("Mag:", x + 65, y + 25);
+  for (int i = 0; i < 3; i ++){
+    textAlign(RIGHT, CENTER);
+    text(String.format("%.2f", mag[i]), x + 100, y + 45 + i*30);
+  }
+  
+  textAlign(LEFT, CENTER);
+  text("Gyro:", x + 125, y + 25);
+  for (int i = 0; i < 3; i ++){
+    textAlign(RIGHT, CENTER);
+    text(String.format("%.2f", gyro[i]), x + 160, y + 45 + i*30);
+  }
+  
+  colorMode(RGB, 1);
+}
+
 void drawMP(float[] mp, int x, int y){
   int ww = 240; 
   int hh = 40;

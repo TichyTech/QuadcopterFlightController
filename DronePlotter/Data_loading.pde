@@ -1,3 +1,7 @@
+final float ACC_FS = 2.0;
+final float MAG_FS = 1.3;
+final float GYRO_FS = 720.0;
+
 final float ANGLE_FS = 180.0;
 final float FORCE_FS = 200.0;
 final float MAX_15BIT = 32767.0;
@@ -47,6 +51,32 @@ void loadValsStateGibberish(ByteBuffer buffer_wrapped){
   motor_percentages[2] = float(unsigned_vals[2]) * (1 / MAX_16BIT);
   motor_percentages[3] = float(unsigned_vals[3]) * (1 / MAX_16BIT);
 
+}
+
+void loadValsSensorGibberish(ByteBuffer buffer_wrapped){
+  short [] signed_vals = new short [12];
+  
+  ms = buffer_wrapped.getInt() & 0xFFFFFFFFL;  // first entry is a uint32_t ms
+  
+  for (int i = 0; i < 12; i++){
+    signed_vals[i] = buffer_wrapped.getShort();
+  }
+  
+  RPY[0] = float(signed_vals[0]) * (ANGLE_FS / MAX_15BIT);
+  RPY[1] = float(signed_vals[1]) * (ANGLE_FS / MAX_15BIT);
+  RPY[2] = float(signed_vals[2]) * (ANGLE_FS / MAX_15BIT);
+  
+  acc[0] = float(signed_vals[3]) * (ACC_FS / MAX_15BIT);
+  acc[1] = float(signed_vals[4]) * (ACC_FS / MAX_15BIT);
+  acc[2] = float(signed_vals[5]) * (ACC_FS / MAX_15BIT);
+  
+  mag[0] = float(signed_vals[6]) * (MAG_FS / MAX_15BIT);
+  mag[1] = float(signed_vals[7]) * (MAG_FS / MAX_15BIT);
+  mag[2] = float(signed_vals[8]) * (MAG_FS / MAX_15BIT);
+  
+  gyro[0] = float(signed_vals[9]) * (GYRO_FS / MAX_15BIT);
+  gyro[1] = float(signed_vals[10]) * (GYRO_FS / MAX_15BIT);
+  gyro[2] = float(signed_vals[11]) * (GYRO_FS / MAX_15BIT);
 }
 
 void loadValsTelemetryGibberish(ByteBuffer buffer_wrapped){
