@@ -85,8 +85,8 @@ void draw() {
     popMatrix();
     //drawText(mystr, 200, 50);
     drawRef(ref_angles, 50, 20);
-    drawVector3(RPY, 50, 240, "RPY:", 20.0);
-    drawVector3(forces, 50, 160, "PID: ", 40.0);
+    drawVector3(RPY, 50, 100, "RPY:", 20.0);
+    drawVector3(forces, 50, 240, "PID: ", 40.0);
     drawSensors(acc, mag, gyro, width - 280, 160);
     drawMotorPercentage(motor_percentages, 240, 20);
     drawBattAlt(altitude, battery, width - 160, 0);
