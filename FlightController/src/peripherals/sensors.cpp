@@ -45,7 +45,7 @@ void Sensors::setup(){
   
   Serial.println("All sensors ready!");
 
-  delay(5000); //delay the calibration process a bit to allow drone to settle on the ground
+  if(SETTLE_DELAY) delay(5000); //delay the calibration process a bit to allow drone to settle on the ground
   gyroscope.calibrate_gyro(); // 3 sec bias calibration
   accmag.calibrate_acc();  // 3 sec bias calibration
 }

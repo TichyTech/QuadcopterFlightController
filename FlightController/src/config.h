@@ -18,12 +18,14 @@
 #define SWITCH_PIN 26
 
 // Settings
+#define SETTLE_DELAY 1
 #define SAFETY 1  // set safe mode
 #define TELEMETRY 1 
-#define DEBUG 1 // enable debugging messages
+#define DEBUG 0  // enable debugging messages
+#define DEBUG_COMM 0  // enable debugging messages
 
 // Timeout settings
-#define COMMAND_TIMEOUT_MS 60000   // 60000 ms
+#define COMMAND_TIMEOUT_MS 3000   // 60000 ms
 #define SENSOR_TIMEOUT_US 2000  // 2 ms
 
 // filter constants
