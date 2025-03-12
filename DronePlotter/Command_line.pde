@@ -23,9 +23,11 @@ void keyPressed() {
   }
   
   // Handle Backspace key: remove the last character
-  else if (keyCode == BACKSPACE && inputText.length() > 0 && cursorPos > 0) {
-    inputText = inputText.substring(0, cursorPos - 1) + inputText.substring(cursorPos);  // Remove character at cursor position
-    cursorPos--;  // Move cursor to the left after deleting
+  else if (keyCode == BACKSPACE) {
+    if (inputText.length() > 0 && cursorPos > 0){
+      inputText = inputText.substring(0, cursorPos - 1) + inputText.substring(cursorPos);  // Remove character at cursor position
+      cursorPos--;  // Move cursor to the left after deleting
+    }
   }
   
   else if (keyCode == '-'){
@@ -41,14 +43,14 @@ void keyPressed() {
 }
 
 
-void drawCommandLine(){
+void drawCommandLine(int x, int y){
   fill(1);  // Light gray background for the input box
   stroke(0);
-  rect(50, height-90, 500, 40, 10);  // Draw input box
+  rect(x, y-90, 500, 40, 10);  // Draw input box
   fill(0);  // Black color for text
   stroke(0);
   textAlign(LEFT, BASELINE);
-  text(inputText, 60, height-60);  // Display text inside the box
-  float cursorX = textWidth(inputText.substring(0, cursorPos)) + 60; // Position based on the cursor position
-  line(cursorX, height-60, cursorX, height-80);  // Draw a cursor
+  text(inputText, x+10, y-60);  // Display text inside the box
+  float cursorX = textWidth(inputText.substring(0, cursorPos)) + 10; // Position based on the cursor position
+  line(x+cursorX, y-55, x+cursorX, y-85);  // Draw a cursor
 }
