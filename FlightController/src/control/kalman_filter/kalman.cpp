@@ -2,17 +2,24 @@
 
 // constants for the EKF
 #define QUAT_VAR_INIT 0.01f
-#define BIAS_VAR_INIT 0.0000001f
+// #define BIAS_VAR_INIT 0.0000001f
+#define BIAS_VAR_INIT 0.00001f
 #define STEADY_BIAS_VAR_MULT 10
 // #define GYRO_VAR 0.0006f  // [rad/s]
 // #define ACC_VAR_BASE 0.1f
 // #define MAG_VAR_BASE 0.1f
-#define GYRO_VAR 0.000061f  // [rad/s]
-#define BIAS_VAR 0.0000001f  // [rad/s]
-const Vector3 ACC_VAR_BASE = {0.1, 0.18, 0.33};
-const Vector3 MAG_VAR_BASE = {0.1, 0.1, 0.1};
+// #define GYRO_VAR 0.000061f  // [rad/s]
+// #define GYRO_VAR 0.0061f  // [rad/s]
+#define GYRO_VAR 0.015f
+// #define BIAS_VAR 0.0000001f  // [rad/s]
+#define BIAS_VAR 0.00001f  // [rad/s]
+// const Vector3 ACC_VAR_BASE = {0.1, 0.18, 0.33};
+const Vector3 ACC_VAR_BASE = {0.05, 0.03, 0.15};
+// const Vector3 MAG_VAR_BASE = {0.1, 0.1, 0.1};
+const Vector3 MAG_VAR_BASE = {3, 3, 3};
 
 #define MAG_INC 1.368266347647853f  // local magnetic inclination [rad]
+// #define MAG_INC 1.17f  // local magnetic inclination [rad]
 
 // definitions for steady state detection
 #define THRESHOLD (3.0f)
@@ -93,7 +100,8 @@ bool KalmanFilter::acc_steady(){
  * Use rotation model to predict quaternion attitude using gyro and time 
  */
 Vector4 KalmanFilter::predict(Vector3 gyro_vec, float dt){
-  Vector3 w = TO_RAD*gyro_vec - b;
+  // Vector3 w = TO_RAD*gyro_vec - b;
+  Vector3 w = TO_RAD*gyro_vec;
   track_gyro(gyro_vec, dt);  // update gyro tracking
 
   // dq(t+1)/dq
@@ -204,8 +212,9 @@ Vector4 KalmanFilter::fuse_acc(Vector3 a){
   Matrix<3,7> H = 2.0f*((q0*a_w + v_x*a_w) || (I_3*dot(v,a_w) + v*~a_w -q0*skew(a_w) -a_w*~v)) || Zeros3_3;
   // Compute the covariance matrix of the measurements and prepare Cholesky decomp
   Matrix<3,3> S = H*P*~H;  
-  if (acc_steady()) S = S + 0.01f*R_acc;  // reduce variance of accelerometer if steady
-  else S = S + R_acc;
+  // if (acc_steady()) S = S + 0.01f*R_acc;  // reduce variance of accelerometer if steady
+  // else S = S + R_acc;
+  S = S + R_acc;
   Matrix<3,3> S_cp = S;
   CholeskyDecomposition LLT = CholeskyDecompose(S_cp);  // Decompose the matrix LL^T
 
