@@ -18,11 +18,15 @@ void format_state(state_struct s_data, char* buffr, size_t bsize){
                           force_to_float(s_data.PID_outputs[1]),
                           force_to_float(s_data.PID_outputs[2])};
 
-  float all_floats[10] = {r, p, y, motors[0], motors[1], motors[2], motors[3], PID_outputs[0], PID_outputs[1], PID_outputs[2]};
+  float ref[2] = {angle_to_float(s_data.ref[0]),
+                  angle_to_float(s_data.ref[1])};
+
+  float all_floats[12] = {r, p, y, motors[0], motors[1], motors[2], motors[3], PID_outputs[0], 
+                          PID_outputs[1], PID_outputs[2], ref[0], ref[1]};
 
   // format floats into string
   snprintf(buffr, bsize, "State: %lu ",  s_data.ms);
-  format_floats_to_buffer(buffr, all_floats, 10);
+  format_floats_to_buffer(buffr, all_floats, 12);
 }
 
 /**
@@ -92,11 +96,11 @@ void print_message_to_serial(telemetry_msg_t tele_msg){
     else Serial.write((uint8_t*)&tele_msg, sizeof(tele_msg));
   }
   else if (tele_msg.type == 1){  // sensor data
-    // if (HUMAN_READABLE){
-    //     sensor_struct s_data = tele_msg.data.sensor_data;
-    //     Serial.println("Telemetry: " + String(s_data.battery) + " " + String(s_data.height));
-    // }
-    // else Serial.write((uint8_t*)&tele_msg, sizeof(tele_msg));
+    if (HUMAN_READABLE){
+        sensor_struct s_data = tele_msg.data.sensor_data;
+        Serial.println("Telemetry: " + String(s_data.battery) + " " + String(s_data.height));
+    }
+    else Serial.write((uint8_t*)&tele_msg, sizeof(tele_msg));
   }
   else if (tele_msg.type == 2){  // ekf data
     if (HUMAN_READABLE){

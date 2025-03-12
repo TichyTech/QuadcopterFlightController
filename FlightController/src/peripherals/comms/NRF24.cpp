@@ -6,6 +6,9 @@ Communication::Communication(){
   new_roll_config = 0;
   new_pitch_config = 0;
   new_yaw_config = 0;
+  batt_telem_countdown = 50;
+
+  latest_control = {0,0,0,0,0};  // roll, pitch, yaw, throttle, motors_on
 }
 
 void Communication::setup_nrf(){
@@ -20,30 +23,33 @@ void Communication::setup_nrf(){
   radio.setChannel(3);
   radio.setAddressWidth(3);
   radio.setDataRate(RF24_2MBPS);
-  radio.setAutoAck(0);
+  radio.enableDynamicAck();
+  radio.setAutoAck(1);
+  radio.setRetries(0, 4);
+
   radio.openWritingPipe(STATADD);
   radio.openReadingPipe(1, CMDADD); 
   radio.startListening();  
-  last_ctrl_msg = 0;  
+  last_ctrl_ms = 0;  
 }
 
 Control Communication::update_commands(float initial_yaw){  // receive latest command message with lost signal handling
   ctrl_msg_t new_ctrl_msg;
   static uint32_t ctrl_sequence_num = 0;
   
-  bool new_command = false;
-  msg_t msg;
+  bool received_ctrl = false;  // received new control flag
   while (radio.available()) { // read latest 32 bytes
+    msg_t msg;
     radio.read(&msg, sizeof(msg_t)); 
     if (msg.type == 0){ // control message received
-      // if (DEBUG) Serial.println("control received");
-      ctrl_msg_count ++;
-      last_ctrl_msg = millis(); 
-      new_command = true;
+      if (DEBUG && DEBUG_COMM) Serial.println("control received");
+      batt_telem_countdown--;
+      last_ctrl_ms = millis(); 
+      received_ctrl = true;
       new_ctrl_msg = msg.data.ctrl_data; 
     }
     else if (msg.type == 1){ // config message received
-      // if (DEBUG) Serial.println("config received");
+      if (DEBUG && DEBUG_COMM) Serial.println("config received");
       config_msg_t new_config = msg.data.config_data;
       if (new_config.axis == 0){  // roll
         roll_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
@@ -58,18 +64,10 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
         new_yaw_config = 1;
       }
     }
-   
   }
   
-  unsigned long no_command_period = millis() - last_ctrl_msg;
-  if (no_command_period > 1000){  // if no ctrl message received in last 1 second, try to hover
-    comm_timed_out = 1;
-    latest_control.roll = 0;  // hover  TODO: calibrate for sensor not being perfectly aligned?
-    latest_control.pitch = 0;  // hover  TODO: calibrate for sensor not being perfectly aligned?
-    latest_control.throttle = max(0, latest_control.throttle - 0.0001);  // reduce throttle slowly
-//    if(SAFETY && (no_command_period >= COMMAND_TIMEOUT_MS)) setpoint.alt = current_state.alt - 0.1;  // start landing slowly after COMMAND_TIMEOUT_MS without signal
-  }
-  else if (new_command){  // build setpoint from message
+  unsigned long ctrl_delay = millis() - last_ctrl_ms;
+  if (received_ctrl){  // received new control
     comm_timed_out = 0;
     latest_control.roll = new_ctrl_msg.roll;
     latest_control.pitch = new_ctrl_msg.pitch;
@@ -78,20 +76,25 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
     latest_control.motors_on = new_ctrl_msg.motors_on;
     // check sequence number on the packet and compare to last seen
     if (++ctrl_sequence_num != new_ctrl_msg.sequence) {
-      // if (DEBUG){
-      //   Serial.print("Sequence mismatch: ");
-      //   Serial.print(ctrl_sequence_num);
-      //   Serial.print(" x ");
-      //   Serial.println(new_ctrl_msg.sequence);
-      // }
+      if (DEBUG && DEBUG_COMM){
+        Serial.print("Sequence mismatch: ");
+        Serial.print(ctrl_sequence_num);
+        Serial.print(" x ");
+        Serial.println(new_ctrl_msg.sequence);
+      }
       ctrl_sequence_num = new_ctrl_msg.sequence;
     }
-
   }
+  else if (ctrl_delay > 1000){  // if no ctrl message received in last 1 second, try to hover
+    comm_timed_out = 1;
+    latest_control.roll = 0;  // hover  TODO: calibrate for sensor not being perfectly aligned?
+    latest_control.pitch = 0;  // hover  TODO: calibrate for sensor not being perfectly aligned?
+  }
+
   return latest_control;
 };
 
-telemetry_msg_t Communication::create_state_telemetry(State state, Vector4 control, float init_yaw, Vector3 PID_outputs){
+telemetry_msg_t Communication::create_state_telemetry(State state, Vector4 control, float init_yaw, Vector3 PID_outputs, Control ref){
   state_struct data;
   data.ms = millis();
   data.roll = angle_to_int(state.roll);
@@ -107,6 +110,9 @@ telemetry_msg_t Communication::create_state_telemetry(State state, Vector4 contr
   data.PID_outputs[0] = force_to_int(PID_outputs(0));
   data.PID_outputs[1] = force_to_int(PID_outputs(1));
   data.PID_outputs[2] = force_to_int(PID_outputs(2));
+
+  data.ref[0] = angle_to_int(ref.roll);
+  data.ref[1] = angle_to_int(ref.pitch);
 
   telemetry_msg_t msg;
   msg.data.state_data = data;
@@ -150,14 +156,11 @@ telemetry_msg_t Communication::create_sensor_telemetry(State state, float init_y
   return msg;
 }
 
+/**
+ * Send message to remote. Takes just below 1ms.
+ */
 void Communication::send_telemetry(telemetry_msg_t msg){
   radio.stopListening(); 
-  // radio.flush_tx();
-  // bool report = radio.startWrite(&msg, sizeof(msg), 0); 
-  // delayMicroseconds(500);
-  // radio.startListening();
-  // radio.flush_rx();
-  bool report = radio.write(&msg, sizeof(msg)); 
-  if (report & (msg.type == 1)) ctrl_msg_count = 0;  // reset counter on success, else try again next loop
+  bool report = radio.write(&msg, sizeof(msg), 1);
   radio.startListening(); 
 }

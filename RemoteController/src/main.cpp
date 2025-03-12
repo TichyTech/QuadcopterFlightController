@@ -44,8 +44,8 @@ void loop() {
   leds[0] = CHSV(51*(motors_mode-1), 255, int(motors_on*(50 + 80*(input_manager.pot_reading))));
   FastLED.show();
   
-  if ((millis() - last_cmd_t) >= 100){
-    smooth_joys = input_manager.smooth_joysticks(mapped_joys, 0.85);
+  if ((millis() - last_cmd_t) >= 50){
+    smooth_joys = input_manager.smooth_joysticks(mapped_joys, 0.7);
     if (abs(smooth_joys.X) < 1) smooth_joys.X = 0;  // discard small angles
     ctrl_msg_t ctrl_msg = {smooth_joys.X2, smooth_joys.Y2, smooth_joys.X, input_manager.pot_reading, uint8_t(motors_on*motors_mode), ++sequence_num};
     last_cmd_t = millis();
@@ -56,7 +56,7 @@ void loop() {
 
   // parse config settings from serial and send
   msg_t msg; 
-  if ((millis() - last_cmd_t) >= 90){
+  if ((millis() - last_cmd_t) >= 40){
     if (parse_serial(msg)){
       bool report = Comms.send_config(msg);
       if (report && DEBUG) Serial.println("Config sent");

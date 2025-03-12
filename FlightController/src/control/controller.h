@@ -20,6 +20,7 @@ class Controller{
 	public:
 		Controller();
     	Vector3 last_PID_outputs;
+		Control last_reference;
 
 		void update_DCM(Matrix3 DCM);
 		Vector4 update_motor_percentages(Control commands, Measurements m);

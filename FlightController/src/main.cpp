@@ -174,11 +174,6 @@ void loop() {  // approxx 0.85 ms per loop
     }
   }
 
-  if(DEBUG) {
-    printVec3(measured_values.gyro_vec, 2);
-    Serial.println();
-  }
-
   controller.update_DCM(estimated_DCM);  
   control_action = controller.update_motor_percentages(ctrl_commands, measured_values); 
   if (motors_on == 0) signal_motors(zero_4vector); 
@@ -188,21 +183,22 @@ void loop() {  // approxx 0.85 ms per loop
 }
 
 void loop1() {
-  if ((millis() - comm.last_ctrl_msg) >= 90){  // more than 90 milliseconds from last command
-    Control received_commands = comm.update_commands(initial_yaw);  // receive new command 
-    commands = received_commands;
-  }
-  else{  // less than 90 milliseconds from last command ==> we can send telemetry
+  commands = comm.update_commands(initial_yaw);  // poll for new commands
+
+  if ((millis() - comm.last_ctrl_ms) <= 90) // less than 90 milliseconds from last command ==> we can send telemetry
+  {
     current_state = compute_state(estimated_DCM, measured_values);  // initial state for reference
-    if (TELEMETRY && (comm.ctrl_msg_count > 50)) {  // send some data back to controller every 50 ctrl cycles 
+    if (TELEMETRY && (comm.batt_telem_countdown <= 0)) {  // send some data back to controller 
       telemetry_msg_t msg = comm.create_batt_telemetry(current_state, measured_values);
       comm.send_telemetry(msg);  
+      comm.batt_telem_countdown = 50;  // reset counter
     }
     
     // the following telemetry takes about 0.9 ms
     if (!loop_telemetry_sent){
-      // telemetry_msg_t msg = comm.create_state_telemetry(current_state, control_action, initial_yaw, controller.last_PID_outputs);
-      telemetry_msg_t msg = comm.create_sensor_telemetry(current_state, initial_yaw, measured_values);
+      telemetry_msg_t msg = comm.create_state_telemetry(current_state, control_action, initial_yaw, controller.last_PID_outputs, controller.last_reference);
+      comm.send_telemetry(msg);
+      msg = comm.create_sensor_telemetry(current_state, initial_yaw, measured_values);
       comm.send_telemetry(msg);
       loop_telemetry_sent = true;  // only send once per control loop
     }

@@ -31,7 +31,7 @@ Controller::Controller(){
   // For a linear system, this would yield a time constant tau = 1/P
   roll_P = 3;
   pitch_P = 3;
-  yaw_P = 0.2;
+  yaw_P = 0.1;
 
   motor_percentages = {0,0,0,0};
   last_PID_outputs = {0,0,0};
@@ -70,6 +70,11 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
   Vector3 des_rates = {0,0,0};
   float dt = m.integration_period;
 
+  last_reference = commands;  // store latest reference
+
+  // static Vector3 smooth_gyro = m.gyro_vec;
+  // smooth_gyro = 0.5f*smooth_gyro + 0.5f*m.gyro_vec;
+
   // Proportional controller on RPY
   des_rates(0) += roll_P*(commands.roll - current_state.roll);  
   des_rates(1) += pitch_P*(commands.pitch - current_state.pitch);
@@ -85,9 +90,9 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
 
   last_PID_outputs = forces;  // for telemetry
 
-  forces(0) = constrain(forces(0), -40, 40);
-  forces(1) = constrain(forces(1), -40, 40);
-  forces(2) = constrain(forces(2), -60, 60);
+  forces(0) = constrain(forces(0), -20, 20);
+  forces(1) = constrain(forces(1), -20, 20);
+  forces(2) = constrain(forces(2), -15, 15);
 
   Vector4 new_percentages = mix_motors(forces, DCM, commands.throttle, m.battery);
   // motor_percentages = new_percentages*MOTOR_LPF + motor_percentages*(1-MOTOR_LPF);
@@ -95,7 +100,7 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
   // Jerk clamping 
   Vector4 d_p = (new_percentages - motor_percentages)/dt;  //normalize by time constant
   // clamp to about +-20 full-scale per second (or 2% per millisecond)
-  const float change_limit = 20;
+  const float change_limit = 10;
   d_p(0) = constrain(d_p(0), -change_limit, change_limit);
   d_p(1) = constrain(d_p(1), -change_limit, change_limit);
   d_p(2) = constrain(d_p(2), -change_limit, change_limit);

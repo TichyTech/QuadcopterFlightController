@@ -101,13 +101,14 @@ typedef struct msg_t{
   } data;
 } msg_t;
 
-typedef struct state_struct{  // 24 bytes
+typedef struct state_struct{  // 28 bytes
   uint32_t ms;
   int16_t roll;
   int16_t pitch;
   int16_t yaw;
   int16_t PID_outputs[3];  // RPY PID outputs before clamping
   uint16_t motors[4];
+  int16_t ref[2];
 } state_struct;  // received command message
 
 typedef struct sensor_struct{  // 8 bytes
