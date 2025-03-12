@@ -23,7 +23,7 @@ void handle_serial_gibberish(){
     int msg_type = buffer_wrapped.getInt();
     if(msg_type == 0){    
       loadValsStateGibberish(buffer_wrapped); 
-      database.add_datapoint(RPY, motor_percentages, ms);
+      database.add_datapoint(RPY, motor_percentages, forces, ms, ref_angles);
       num_messages++;
       new_messages++;
     }
@@ -56,7 +56,7 @@ if (sp.available() > 0){
     String msg_type = split_string[0];    
     if(msg_type.equals("State:")){    
       loadValsState(split_string); 
-      database.add_datapoint(RPY, motor_percentages, ms);
+      database.add_datapoint(RPY, motor_percentages, forces, ms, ref_angles);
       num_messages++;
       new_messages++;
     }

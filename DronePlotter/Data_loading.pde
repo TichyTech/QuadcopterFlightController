@@ -27,7 +27,7 @@ void loadValsState(String[] data) {
 }
 
 void loadValsStateGibberish(ByteBuffer buffer_wrapped){
-  short [] signed_vals = new short [6];
+  short [] signed_vals = new short [8];
   int [] unsigned_vals = new int [4];
   
   ms = buffer_wrapped.getInt() & 0xFFFFFFFFL;  // first entry is a uint32_t ms
@@ -38,6 +38,8 @@ void loadValsStateGibberish(ByteBuffer buffer_wrapped){
   for (int i = 0; i < 4; i++){
     unsigned_vals[i] = buffer_wrapped.getShort() & 0xFFFF;
   }
+  signed_vals[6] = buffer_wrapped.getShort();
+  signed_vals[7] = buffer_wrapped.getShort();
   
   RPY[0] = float(signed_vals[0]) * (ANGLE_FS / MAX_15BIT);
   RPY[1] = float(signed_vals[1]) * (ANGLE_FS / MAX_15BIT);
@@ -50,7 +52,9 @@ void loadValsStateGibberish(ByteBuffer buffer_wrapped){
   motor_percentages[1] = float(unsigned_vals[1]) * (1 / MAX_16BIT);
   motor_percentages[2] = float(unsigned_vals[2]) * (1 / MAX_16BIT);
   motor_percentages[3] = float(unsigned_vals[3]) * (1 / MAX_16BIT);
-
+  
+  ref_angles[0] = float(signed_vals[6]) * (ANGLE_FS / MAX_15BIT);
+  ref_angles[1] = float(signed_vals[7]) * (ANGLE_FS / MAX_15BIT);
 }
 
 void loadValsSensorGibberish(ByteBuffer buffer_wrapped){

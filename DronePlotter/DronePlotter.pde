@@ -15,6 +15,7 @@ byte[] buff = new byte[256];
 float[] RPY = new float[3];
 float[] motor_percentages = new float[4];
 float[] forces = new float[3];
+float[] ref_angles = new float[2];
 long ms;
 
 // battery telemetry
@@ -39,7 +40,7 @@ SensorDataPoints sensor_database;
 int serialPort = 2;
  
 void setup() {
-  size(1080, 720, P3D);
+  size(1440, 1080, P3D);
   surface.setTitle("Drone Plotter");
   surface.setLocation(100, 100);
   colorMode(RGB, 1); 
@@ -56,7 +57,7 @@ void setup() {
   println("Connecting to " + portName);
   
   database = new DataPoints(2048);
-  sensor_database = new SensorDataPoints(2048);
+  sensor_database = new SensorDataPoints(1024);
   wait_for_setup();
 }
    
@@ -83,14 +84,20 @@ void draw() {
     drawRPYm(RPY, motor_percentages);
     popMatrix();
     //drawText(mystr, 200, 50);
-    drawState(RPY, 50, 20);
-    drawSensors(acc, mag, gyro, 800, 80);
-    drawMP(motor_percentages, 200, 20);
-    drawForces(forces, 200, 60);
-    drawTelemetry(altitude, battery, 460, 20);
-    drawMessageCount(dt, 800, 40);
-    drawCommandLine();
+    drawRef(ref_angles, 50, 20);
+    drawVector3(RPY, 50, 240, "RPY:", 20.0);
+    drawVector3(forces, 50, 160, "PID: ", 40.0);
+    drawSensors(acc, mag, gyro, width - 280, 160);
+    drawMotorPercentage(motor_percentages, 240, 20);
+    drawBattAlt(altitude, battery, width - 160, 0);
+    drawMessageCount(dt, width - 440, 0);
+    drawCommandLine(20, height - height/3);
     
+    drawXYZ(sensor_database.mss, sensor_database.gyros, width - width/3, height - height/3, width/3, height/3, 50, sensor_database.start, sensor_database.items, "Gyro");
+    drawXYZ(sensor_database.mss, sensor_database.accs, 0, height - height/3, width/3, height/3, 2, sensor_database.start, sensor_database.items, "Acc");
+    drawXYZ(sensor_database.mss, sensor_database.mags, width/2 - width/6, height - height/3, width/3, height/3, 0.5, sensor_database.start, sensor_database.items, "Mag");
+
+
     last_draw = current_millis;
     }
 }
