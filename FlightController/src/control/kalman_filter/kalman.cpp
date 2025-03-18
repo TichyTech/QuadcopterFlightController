@@ -10,13 +10,18 @@
 // #define MAG_VAR_BASE 0.1f
 // #define GYRO_VAR 0.000061f  // [rad/s]
 // #define GYRO_VAR 0.0061f  // [rad/s]
-#define GYRO_VAR 0.015f
+// #define GYRO_VAR 0.015f
 // #define BIAS_VAR 0.0000001f  // [rad/s]
 #define BIAS_VAR 0.00001f  // [rad/s]
 // const Vector3 ACC_VAR_BASE = {0.1, 0.18, 0.33};
-const Vector3 ACC_VAR_BASE = {0.05, 0.03, 0.15};
+// const Vector3 ACC_VAR_BASE = {0.05, 0.03, 0.15};
 // const Vector3 MAG_VAR_BASE = {0.1, 0.1, 0.1};
-const Vector3 MAG_VAR_BASE = {3, 3, 3};
+// const Vector3 MAG_VAR_BASE = {3, 3, 3};
+
+// Best Calib Ever
+#define GYRO_VAR 0.000015f 
+const Vector3 ACC_VAR_BASE = {0.05, 0.05, 0.05};
+const Vector3 MAG_VAR_BASE = {1, 1, 1};
 
 #define MAG_INC 1.368266347647853f  // local magnetic inclination [rad]
 // #define MAG_INC 1.17f  // local magnetic inclination [rad]
@@ -42,8 +47,8 @@ KalmanFilter::KalmanFilter(){
   R_mag = diag_matrix(MAG_VAR_BASE);
 
   a_w = {0,0,1};
-  m_w = {cos(MAG_INC), 0, -sin(MAG_INC)};
-  // m_w = {1,0,0};  // here we need to remove magnetic component parallel to acc
+  // m_w = {cos(MAG_INC), 0, -sin(MAG_INC)};
+  m_w = {1,0,0};  // here we need to remove magnetic component parallel to acc
 
   gyro_timer = 0;
   acc_timer = 0;
