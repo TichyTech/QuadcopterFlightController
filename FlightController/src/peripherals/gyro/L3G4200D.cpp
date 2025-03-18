@@ -1,9 +1,10 @@
 // https://www.pololu.com/file/0J491/L3G4200D.pdf
+// https://www.elecrow.com/download/L3G4200_AN3393.pdf
 // L3G4200D gyro
 #include "L3G4200D.h"
 
 #define GYRO_ADR 0x69
-// #define DPS_PER_LSB 0.01526  // for +-500 dps FS assuming 16 bits of data
+// #define DPS_PER_LSB 0.01526f  // for +-500 dps FS assuming 16 bits of data
 #define DPS_PER_LSB 0.0610351f  // for +- 2000 dps FS
 // #define ROLL_MULT 1.139f  // sensitivity calibration complementary
 #define ROLL_MULT 1.1723333f  // sensitivity calibration EKF
@@ -28,10 +29,19 @@ Gyro::Gyro(){
   bias_compensation_on = 0;
   dynamic_bias = {0,0,0};
   bias_timer = 0;
+
+  stream_buff[0] = {0,0,0};
+  stream_buff[1] = {0,0,0};
+  stream_buff[2] = {0,0,0};
+  stream_buff[3] = {0,0,0};
 }
 
-void Gyro::setup_gyro() {
-  Serial.println("Setting up gyroscope");
+void Gyro::setup_gyro(){
+  setup_gyro_bypass();
+}
+
+void Gyro::setup_gyro_bypass() {
+  Serial.println("Setting up gyroscope to BYPASS mode");
   Wire.beginTransmission(GYRO_ADR);
   byte error = Wire.endTransmission();
   if(error){
@@ -39,15 +49,14 @@ void Gyro::setup_gyro() {
     while(1){}
   }
 
-  Wire.beginTransmission(GYRO_ADR);
-  Wire.write(0x0F | (1 << 7));
-  Wire.endTransmission();
-  Wire.requestFrom(GYRO_ADR, (byte)1);
-  while (!Wire.available()) {}
-  uint8_t whoami = Wire.read();
+  // Wire.beginTransmission(GYRO_ADR);
+  // Wire.write(0x0F | (1 << 7));
+  // Wire.endTransmission();
+  // Wire.requestFrom(GYRO_ADR, (byte)1);
+  // while (!Wire.available()) {}
+  // uint8_t whoami = Wire.read();
   
 
-  
   // writeReg(GYRO_ADR, 0x23, 0x90);  // Block update until read, FS 500 dps 
  writeReg(GYRO_ADR, 0x23, 0xB0);  // Block update until read, FS 2000 dps 
 //  writeReg(GYRO_ADR, 0x20, 0xEF);  // 800 Hz, LP 50 Hz Cutoff
@@ -58,14 +67,88 @@ void Gyro::setup_gyro() {
   writeReg(GYRO_ADR, 0x20, 0xEF);  // 800 Hz, LP 50 Hz Cutoff
 //  writeReg(GYRO_ADR, 0x21, 0x09);  // Normal mode, 1 Hz Cutoff
 
-  filtered_gyro_vec = read_gyro();
+  filtered_gyro_vec = read_gyro_single();
 }
 
+void Gyro::setup_gyro_stream() {
+  Serial.println("Setting up gyroscope to BYPASS mode");
+  Wire.beginTransmission(GYRO_ADR);
+  byte error = Wire.endTransmission();
+  if(error){
+    Serial.println("Gyroscope not responding");
+    while(1){}
+  }
 
-Vector3 Gyro::read_gyro() {
+//  writeReg(GYRO_ADR, 0x20, 0xEF);  // 800 Hz, LP 50 Hz Cutoff
+  writeReg(GYRO_ADR, 0x20, 0x8F);  // 400 Hz, LP 50 Hz Cutoff
+  // writeReg(GYRO_ADR, 0x20, 0x0F);  // 100 Hz 12.5Hz cutoff, normal mode
+  // writeReg(GYRO_ADR, 0x20, 0x4F);  // 200 Hz 12.5Hz cutoff, normal mode
+  // writeReg(GYRO_ADR, 0x21, 0x29);  // Normal mode HPRESETFILTER, HP 0.1 Hz Cutoff
+  writeReg(GYRO_ADR, 0x23, 0x90);  // Block update until read, FS 500 dps 
+  writeReg(GYRO_ADR, 0x24, 0x40);  // EN_FIFO
+  writeReg(GYRO_ADR, 0x2E, 0x40);  // FIFO mode Stream
+
+  filtered_gyro_vec = read_gyro_single();
+}
+
+/**
+ * convert 6 byte buffer from the gyro to correctly scaled float Vector3 and static bias corrected
+ */
+Vector3 Gyro::buff_to_Vec(uint8_t* buff){
+  uint8_t xlg = buff[0];
+  uint8_t xhg = buff[1];
+  uint8_t ylg = buff[2];
+  uint8_t yhg = buff[3];
+  uint8_t zlg = buff[4];
+  uint8_t zhg = buff[5];
+
+  Vector3 gyro_vals;
+  gyro_vals(1) =  PITCH_MULT*float((int16_t)(xhg << 8 | xlg));
+  gyro_vals(0) =  ROLL_MULT*float((int16_t)(yhg << 8 | ylg));
+  gyro_vals(2) =  -YAW_MULT*float((int16_t)(zhg << 8 | zlg));
+  gyro_vals = gyro_vals*DPS_PER_LSB - gyro_bias;  // corrected reading
+  return gyro_vals;
+}
+
+int16_t stream_buff_idx = 0;
+Vector3 Gyro::read_gyro_stream(){
+  // takes cca 140 + 240*reading us to complete
+  Wire.beginTransmission(GYRO_ADR);
+  Wire.write(0x2F);  // FIFO_SRC_REG 
+  Wire.endTransmission();
+  Wire.requestFrom(GYRO_ADR, (byte)1);
+  while (!Wire.available()) {}
+  byte src_reg = Wire.read();
+  uint8_t num_readings = (src_reg & 0x1F);
+
+  if (num_readings > 0){
+    Wire.beginTransmission(GYRO_ADR);
+    Wire.write(0x28 | (1 << 7));
+    Wire.endTransmission();
+    Wire.requestFrom(GYRO_ADR, (byte)(6*num_readings));  // request all readings  
+    for (int i = 0; i < num_readings; i++){
+      while (Wire.available() < 6) {}  // wait for data
+      stream_buff_idx = (stream_buff_idx + 1) % 4;
+      uint8_t received_data[6];
+      for (int j = 0; j < 6; j++) received_data[j] = Wire.read();
+      stream_buff[stream_buff_idx] = buff_to_Vec(received_data);
+    }
+  }
+
+  Vector3 gyro_vals = {0,0,0};
+  float coeffs[4] = {0.25, 0.25, 0.25, 0.25};
+  for (int off = 0; off < 4; off++){
+    uint8_t buff_idx = (stream_buff_idx - off + 4) % 4;
+    gyro_vals += coeffs[off] * stream_buff[buff_idx];
+  }
+  return gyro_vals;
+}
+
+Vector3 Gyro::read_gyro_single() {
   uint32_t current_micros = micros();
   if ((current_micros - last_gyro_timestamp) < GYRO_REFRESH_PERIOD*1000000) return last_gyro_vec; 
   
+  uint8_t received_data[6];
   Wire.beginTransmission(GYRO_ADR);
   Wire.write(0x28 | (1 << 7));
   Wire.endTransmission();
@@ -77,18 +160,8 @@ Vector3 Gyro::read_gyro() {
     }  
   }
 
-  uint8_t xlg = Wire.read();
-  uint8_t xhg = Wire.read();
-  uint8_t ylg = Wire.read();
-  uint8_t yhg = Wire.read();
-  uint8_t zlg = Wire.read();
-  uint8_t zhg = Wire.read();
-
-  Vector3 gyro_vals;
-  gyro_vals(1) =  PITCH_MULT*float((int16_t)(xhg << 8 | xlg));
-  gyro_vals(0) =  ROLL_MULT*float((int16_t)(yhg << 8 | ylg));
-  gyro_vals(2) =  -YAW_MULT*float((int16_t)(zhg << 8 | zlg));
-  gyro_vals = gyro_vals*DPS_PER_LSB - gyro_bias;  // corrected reading
+  for (int i = 0; i < 6; i++) received_data[i] = Wire.read();
+  Vector3 gyro_vals = buff_to_Vec(received_data);
 
   // dynamic bias compensation implementation
   if (bias_compensation_on){  // according to Madgwick
@@ -110,7 +183,7 @@ Vector3 Gyro::read_gyro() {
 
 Vector3 Gyro::get_filtered_gyro(){
   if ((micros() - last_gyro_timestamp) < GYRO_REFRESH_PERIOD*1000000) return filtered_gyro_vec; 
-  Vector3 gyro_reading = read_gyro();
+  Vector3 gyro_reading = read_gyro_single();
   filtered_gyro_vec = gyro_reading * GYROLPF_RATIO + filtered_gyro_vec * (1 - GYROLPF_RATIO);
   return filtered_gyro_vec;
 };
@@ -120,13 +193,13 @@ void Gyro::calibrate_gyro(){
   Vector3 data = {0,0,0};
   delay(2000);
   for (int i = 0; i < 100; i ++){
-    data += read_gyro()/100.0f;
+    data += read_gyro_single()/100.0f;
     delayMicroseconds(GYRO_REFRESH_PERIOD*1000000 + 100);
   }
   gyro_bias = data;
   Vector3 gyro_sigma = {0,0,0}; 
   for (int i = 0; i < 100; i ++){
-    Vector3 meas = read_gyro();
+    Vector3 meas = read_gyro_single();
     Vector3 squares = {meas(0)*meas(0), meas(1)*meas(1), meas(2)*meas(2)};
     gyro_sigma += squares/(99.0f);
     delayMicroseconds(GYRO_REFRESH_PERIOD*1000000 + 100);

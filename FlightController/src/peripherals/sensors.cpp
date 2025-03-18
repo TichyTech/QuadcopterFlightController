@@ -32,7 +32,8 @@ Sensors::Sensors(){
 void Sensors::setup(){
   Serial.println("Setting up peripherals");
 
-  gyroscope.setup_gyro(); // blocking
+  // gyroscope.setup_gyro(); // blocking
+  gyroscope.setup_gyro();
   accmag.setup_acc();  // blocking
   accmag.setup_mag();  // blocking
   altimeter.setup_alt();  // blocking
@@ -54,7 +55,7 @@ Measurements Sensors::get_measurements(){  // init all readings to bypass low pa
   Measurements new_m;
   new_m.acc_vec = accmag.read_acc(); 
   new_m.mag_vec = accmag.read_mag();
-  new_m.gyro_vec = gyroscope.read_gyro();
+  new_m.gyro_vec = gyroscope.read_gyro_single();
   new_m.altitude = altimeter.read_alt();
   new_m.battery = battery.get_voltage();
   new_m.integration_period = update_integration_period();  // first integration period is invalid!!
