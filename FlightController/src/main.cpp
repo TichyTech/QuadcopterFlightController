@@ -152,8 +152,13 @@ void loop() {  // approxx 0.85 ms per loop
   // controller.update_DCM(estimated_DCM);
   q = k_filter.predict(measured_values.gyro_vec, measured_values.integration_period);  // model prediction using gyro
   k_filter.track_acc(measured_values.acc_vec, measured_values.integration_period);  // track accelerometer magnitude
-  q = k_filter.fuse_acc(normalize(measured_values.acc_vec));  // fuse accelerometer data
-  q = k_filter.fuse_mag(normalize(measured_values.mag_vec));  // fuse magnetometer data
+
+  // TODO: verify this actually helps??
+  Vector3 unit_acc = normalize(measured_values.acc_vec);
+  Vector3 unit_mag = normalize(measured_values.mag_vec);
+  Vector3 perp_mag = unit_mag - dot(unit_mag, unit_acc)*unit_acc;
+  q = k_filter.fuse_acc(unit_acc);  // fuse accelerometer data
+  q = k_filter.fuse_mag(perp_mag);  // fuse magnetometer data
   estimated_DCM = k_filter.quat2R(q);  // quat to DCM conversion
   float max_val = k_filter.clamp_variance();  // reduce variance if too big
 
