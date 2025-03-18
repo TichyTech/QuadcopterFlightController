@@ -7,7 +7,8 @@ void wait_for_setup(){
     int numBytes = sp.readBytesUntil('\n', buff); // try reading bytes from serial
     String mystr = (new String(buff, 0, numBytes)).trim();
     println(mystr);
-    if (mystr.equals("Setup Done")) break;
+    delay(200);
+    if (mystr.equals("Setup done")) break;
   }
   println("Setup done!");
 }
@@ -38,7 +39,6 @@ void handle_serial_gibberish(){
       num_messages++;
       new_messages++;
     }
-
     if (sp.available() >= 32){
       numBytes = sp.readBytes(buffer); // try reading bytes from serial
     }
