@@ -4,9 +4,10 @@
 
 #define ACC_ADR 0x19
 #define MAG_ADR 0x1E
-// #define ACC_REFRESH_PERIOD 2500  // for 400 HZ
-#define ACC_REFRESH_PERIOD 745  // for 1344 HZ
-#define MAG_REFRESH_PERIOD 4555  // for 220 HZ
+#define ACC_REFRESH_RATE 400.0f  // Hz
+#define ACC_REFRESH_PERIOD (1.0f/ACC_REFRESH_RATE)  // in seconds
+#define MAG_REFRESH_RATE 220.0f  // Hz
+#define MAG_REFRESH_PERIOD (1.0f/MAG_REFRESH_RATE)  // in seconds
 #define ACC_FS 2.0f  // g
 #define MAG_FS 1.3f  // gauss
 
@@ -31,8 +32,8 @@ void AccMag::setup_acc(){
     while(1){}
   }
       
-//  writeReg(ACC_ADR, 0x20, 0x77); // 400Hz,  enable XYZ
-  writeReg(ACC_ADR, 0x20, 0x97); // 1344Hz,  enable XYZ
+ writeReg(ACC_ADR, 0x20, 0x77); // 400Hz,  enable XYZ
+  // writeReg(ACC_ADR, 0x20, 0x97); // 1344Hz,  enable XYZ
   writeReg(ACC_ADR, 0x23, 0x88); // block update until read, LSB first, FS +-2g, enable High resolution
   filtered_acc_vec = read_acc();
 }
@@ -58,7 +59,7 @@ void AccMag::setup_mag(){
 
 Vector3 AccMag::read_acc(){
   // fetches latest possible measurement from accelerometer unit
-  if ((micros() - last_acc_timestamp) < ACC_REFRESH_PERIOD) return last_acc_vec; 
+  if ((micros() - last_acc_timestamp) < (ACC_REFRESH_PERIOD*1000000)) return last_acc_vec; 
   else last_acc_timestamp = micros();
   
   Wire.beginTransmission(ACC_ADR);
@@ -92,7 +93,7 @@ Vector3 AccMag::read_acc(){
 
 Vector3 AccMag::read_mag(){
   // fetches latest possible measurement from magnetometer unit
-  if ((micros() - last_mag_timestamp) < MAG_REFRESH_PERIOD) return last_mag_vec; 
+  if ((micros() - last_mag_timestamp) < (MAG_REFRESH_PERIOD * 1000000)) return last_mag_vec; 
   else last_mag_timestamp = micros();
   
   Wire.beginTransmission(MAG_ADR);
@@ -125,14 +126,14 @@ Vector3 AccMag::read_mag(){
 }
 
 Vector3 AccMag::get_filtered_acc(){
-  if ((micros() - last_acc_timestamp) < ACC_REFRESH_PERIOD) return filtered_acc_vec; 
+  if ((micros() - last_acc_timestamp) < (ACC_REFRESH_PERIOD*1000000)) return filtered_acc_vec; 
   Vector3 acc_reading = read_acc();
   filtered_acc_vec = acc_reading * ACCLPF_RATIO + filtered_acc_vec * (1 - ACCLPF_RATIO);
   return filtered_acc_vec;
 };
 
 Vector3 AccMag::get_filtered_mag(){
-  if ((micros() - last_mag_timestamp) < MAG_REFRESH_PERIOD) return filtered_mag_vec; 
+  if ((micros() - last_mag_timestamp) < (MAG_REFRESH_PERIOD * 1000000)) return filtered_mag_vec; 
   Vector3 mag_reading = read_mag();
   filtered_mag_vec = mag_reading * MAGLPF_RATIO + filtered_mag_vec * (1 - MAGLPF_RATIO);
   return filtered_mag_vec;
@@ -144,7 +145,7 @@ void AccMag::calibrate_acc(){  // sensor needs to be perpendicular to gravity ve
   delay(500);
   for (int i = 0; i < 50; i ++){
     grav_dir += read_acc()/50.0f;
-    delayMicroseconds(ACC_REFRESH_PERIOD + 100);
+    delayMicroseconds((ACC_REFRESH_PERIOD*1000000) + 100);
   }
   grav_dir = normalize(grav_dir);  // get gravity vector of magnitude 1
 
@@ -152,14 +153,14 @@ void AccMag::calibrate_acc(){  // sensor needs to be perpendicular to gravity ve
   acc_bias = {0,0,0};
   for (int i = 0; i < 100; i ++){
     acc_bias += (read_acc() - grav_dir)/100.0f;
-    delayMicroseconds(ACC_REFRESH_PERIOD + 100);
+    delayMicroseconds((ACC_REFRESH_PERIOD*1000000) + 100);
   }
   Vector3 acc_sigma = {0,0,0}; 
   for (int i = 0; i < 100; i ++){
     Vector3 meas = read_acc() - grav_dir - acc_bias;
     Vector3 squares = {meas(0)*meas(0), meas(1)*meas(1), meas(2)*meas(2)};
     acc_sigma += squares*(1.0f/99.0f);
-    delayMicroseconds(ACC_REFRESH_PERIOD + 100);
+    delayMicroseconds((ACC_REFRESH_PERIOD*1000000) + 100);
   }
   Serial.print("Acc sigma: ");
   printVec3(acc_sigma, 5);
