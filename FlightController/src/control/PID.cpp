@@ -25,8 +25,7 @@ void PID::set_PID_params(float setP, float setI, float setD, float sat, float se
 	D = setD;
 	saturation = sat;
 	LPc = setLPc; // derivative low pass filter coefficient
-	if (DEBUG)
-		Serial.println(nm + " PID parameters set " + String(P, 2) + " " + String(LPc, 2));
+	if (DEBUG) Serial.println(nm + " PID parameters set " + String(P, 2) + " " + String(LPc, 2));
 }
 	
 float PID::process(float reference, float measurement, float dt){
