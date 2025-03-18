@@ -9,7 +9,7 @@ long new_messages = 0;
 float mean_msg = 0;
 
 Serial sp;
-byte[] buff = new byte[256];
+byte[] buff = new byte[512];
 
 // telemetry variables
 float[] RPY = new float[3];
