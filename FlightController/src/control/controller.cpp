@@ -72,8 +72,8 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
 
   last_reference = commands;  // store latest reference
 
-  // static Vector3 smooth_gyro = m.gyro_vec;
-  // smooth_gyro = 0.5f*smooth_gyro + 0.5f*m.gyro_vec;
+  static Vector3 smooth_gyro = m.gyro_vec;
+  smooth_gyro = (1 - GYROLPF_RATIO)*smooth_gyro + GYROLPF_RATIO*m.gyro_vec;
 
   // Proportional controller on RPY
   des_rates(0) += roll_P*(commands.roll - current_state.roll);  
@@ -90,9 +90,9 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
 
   last_PID_outputs = forces;  // for telemetry
 
-  forces(0) = constrain(forces(0), -20, 20);
-  forces(1) = constrain(forces(1), -20, 20);
-  forces(2) = constrain(forces(2), -15, 15);
+  forces(0) = constrain(forces(0), -60, 60);
+  forces(1) = constrain(forces(1), -60, 60);
+  forces(2) = constrain(forces(2), -30, 30);
 
   Vector4 new_percentages = mix_motors(forces, DCM, commands.throttle, m.battery);
   // motor_percentages = new_percentages*MOTOR_LPF + motor_percentages*(1-MOTOR_LPF);
@@ -145,8 +145,8 @@ Vector4 Controller::mix_motors(Vector3 forces, Matrix3 DCM, float throttle, floa
   // }
   motor_percentages += yaw_action*forces(2) / (MOTOR_FORCE);
 
-  if (battery > 10) // should always be the case, if battery is connected
-  motor_percentages *= (IDEAL_VOLTAGE*IDEAL_VOLTAGE)/(battery*battery);  // battery charge compensation
+  // if (battery > 10) // should always be the case, if battery is connected
+  // motor_percentages *= (IDEAL_VOLTAGE*IDEAL_VOLTAGE)/(battery*battery);  // battery charge compensation
 
   motor_percentages(0) = constrain(motor_percentages(0), 0, 1);
   motor_percentages(1) = constrain(motor_percentages(1), 0, 1);
