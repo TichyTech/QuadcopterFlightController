@@ -37,7 +37,9 @@ class DataPoints{
   }
   
   void save_to_file(){
-    PrintWriter writer = createWriter("Logs/DataLog.txt");
+    float curr_minute = minute();
+    float curr_sec = second();
+    PrintWriter writer = createWriter("Logs/"+ str(curr_minute) + "_" + str(curr_sec) + "/DataLog.txt");
     for (int i = 0; i < this.items; i++){
       int idx = (this.start + i) % this.len;
       float [] c_mp = this.mps[idx];
@@ -98,7 +100,9 @@ class SensorDataPoints{
   }
   
   void save_to_file(){
-    PrintWriter writer = createWriter("Logs/SensorDataLog.txt");
+    float curr_minute = minute();
+    float curr_sec = second();
+    PrintWriter writer = createWriter("Logs/" + str(curr_minute) + "_" + str(curr_sec) + "/SensorDataLog.txt");
     for (int i = 0; i < this.items; i++){
       int idx = (this.start + i) % this.len;
       float [] c_acc = this.accs[idx];

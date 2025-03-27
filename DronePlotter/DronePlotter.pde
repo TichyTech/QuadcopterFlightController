@@ -57,7 +57,7 @@ void setup() {
   println("Connecting to " + portName);
   
   database = new DataPoints(2048);
-  sensor_database = new SensorDataPoints(1024);
+  sensor_database = new SensorDataPoints(2048);
   wait_for_setup();
 }
    
