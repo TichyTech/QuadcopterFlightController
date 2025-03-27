@@ -26,6 +26,7 @@ void Communication::setup_nrf(){
     radio.startListening();   
 
     radio.printDetails();
+    Serial.println();
 
 }
 

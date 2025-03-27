@@ -24,6 +24,7 @@ void setup() {
 uint8_t motors_mode = 1;
 uint8_t motors_on = 0;
 Joysticks smooth_joys = {0,0,0,0};
+float yaw_diff_setpoint = 0;
 
 uint32_t last_cmd_t = 0;
 uint32_t last_telem_t = 0;
@@ -47,7 +48,9 @@ void loop() {
   if ((millis() - last_cmd_t) >= 50){
     smooth_joys = input_manager.smooth_joysticks(mapped_joys, 0.7);
     if (abs(smooth_joys.X) < 1) smooth_joys.X = 0;  // discard small angles
-    ctrl_msg_t ctrl_msg = {smooth_joys.X2, smooth_joys.Y2, smooth_joys.X, input_manager.pot_reading, uint8_t(motors_on*motors_mode), ++sequence_num};
+    yaw_diff_setpoint += smooth_joys.X;
+    // subtract IMU/thrust angle diff ~[1,9, 1.6]
+    ctrl_msg_t ctrl_msg = {smooth_joys.X2 - 1.9, smooth_joys.Y2 - 1.6, yaw_diff_setpoint, input_manager.pot_reading, uint8_t(motors_on*motors_mode), ++sequence_num};
     last_cmd_t = millis();
     bool report = Comms.send_ctrl(ctrl_msg);
     if (DEBUG) Serial.println("Sending commands"); 
