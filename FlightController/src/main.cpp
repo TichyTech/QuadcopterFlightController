@@ -103,6 +103,7 @@ void setup1(){
 
 bool loop_telemetry_sent = false;
 
+float throttle = 0;
 void loop() {  // approxx 0.85 ms per loop 
   while(digitalRead(SWITCH_PIN)) {  // stop motors and blink red LED if switch is on
     signal_motors(zero_4vector);  
@@ -155,10 +156,27 @@ void loop() {  // approxx 0.85 ms per loop
 
   // TODO: verify this actually helps??
   Vector3 unit_acc = normalize(measured_values.acc_vec);
-  Vector3 unit_mag = normalize(measured_values.mag_vec);
-  Vector3 perp_mag = unit_mag - dot(unit_mag, unit_acc)*unit_acc;
+  throttle = 0.9f*throttle + 0.1f*motors_on*0.25f*(control_action(0) + control_action(1) + control_action(2) + control_action(3));
   q = k_filter.fuse_acc(unit_acc);  // fuse accelerometer data
-  q = k_filter.fuse_mag(perp_mag);  // fuse magnetometer data
+  // q = k_filter.fuse_mag(perp_mag);  // fuse magnetometer data
+  Vector3 quad_coeff = {-0.493,0.333,0.385};
+  Vector3 mg_bias = throttle*throttle*quad_coeff;
+  Vector3 comp_mag = measured_values.mag_vec - mg_bias;
+  Vector3 unit_mag = normalize(comp_mag);
+  // Vector3 perp_mag = unit_mag - dot(unit_mag, unit_acc)*unit_acc;
+  Vector3 est_up = estimated_DCM.Column(2);
+  Vector3 perp_mag = unit_mag - dot(unit_mag, est_up)*est_up;
+
+
+  q = k_filter.fuse_mag(normalize(perp_mag));  // fuse unnormalized mag
+
+  // if (DEBUG){
+  //   Serial.print(throttle);
+  //   Serial.print(" ");
+  //   printVec3(k_filter.mag_bias, 2);
+  //   Serial.println();
+  // }
+
   estimated_DCM = k_filter.quat2R(q);  // quat to DCM conversion
   float max_val = k_filter.clamp_variance();  // reduce variance if too big
 
