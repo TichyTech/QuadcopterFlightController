@@ -4,14 +4,12 @@
 #include "L3G4200D.h"
 
 #define GYRO_ADR 0x69
-// #define DPS_PER_LSB 0.01526f  // for +-500 dps FS assuming 16 bits of data
-#define DPS_PER_LSB 0.0610351f  // for +- 2000 dps FS
-// #define ROLL_MULT 1.139f  // sensitivity calibration complementary
+#define DPS_PER_LSB 0.01526f  // for +-500 dps FS assuming 16 bits of data
+// #define DPS_PER_LSB 0.0610351f  // for +- 2000 dps FS
 #define ROLL_MULT 1.1723333f  // sensitivity calibration EKF
-// #define PITCH_MULT 1.166f  // sensitivity calibration complementary
 #define PITCH_MULT 1.21134444444f  // sensitivity calibration EKF
 #define YAW_MULT 1.1556f  // sensitivity calibration 
-#define GYRO_REFRESH_RATE 800.0f  // for 800 Hz
+#define GYRO_REFRESH_RATE 400.0f  // for 800 Hz
 #define GYRO_REFRESH_PERIOD (1.0f/GYRO_REFRESH_RATE) // in seconds
 
 // dynamic bias compensation definitions
@@ -37,7 +35,7 @@ Gyro::Gyro(){
 }
 
 void Gyro::setup_gyro(){
-  setup_gyro_bypass();
+  setup_gyro_stream();
 }
 
 void Gyro::setup_gyro_bypass() {
@@ -57,14 +55,15 @@ void Gyro::setup_gyro_bypass() {
   // uint8_t whoami = Wire.read();
   
 
-  // writeReg(GYRO_ADR, 0x23, 0x90);  // Block update until read, FS 500 dps 
- writeReg(GYRO_ADR, 0x23, 0xB0);  // Block update until read, FS 2000 dps 
-//  writeReg(GYRO_ADR, 0x20, 0xEF);  // 800 Hz, LP 50 Hz Cutoff
+  writeReg(GYRO_ADR, 0x20, 0x8F);  // 400 Hz, LP 20 Hz Cutoff
   writeReg(GYRO_ADR, 0x21, 0x29);  // Normal mode HPRESETFILTER, HP 0.1 Hz Cutoff
+  writeReg(GYRO_ADR, 0x23, 0x90);  // Block update until read, FS 500 dps 
+//  writeReg(GYRO_ADR, 0x23, 0xB0);  // Block update until read, FS 2000 dps 
+//  writeReg(GYRO_ADR, 0x20, 0xEF);  // 800 Hz, LP 50 Hz Cutoff
 //  writeReg(GYRO_ADR, 0x20, 0x6F);  // 200 Hz, 50 Hz Cutoff
   // writeReg(GYRO_ADR, 0x20, 0xFF);  // 800 Hz, LP 110 Hz Cutoff
   // writeReg(GYRO_ADR, 0x20, 0xCF);  // 800 Hz, LP 30 Hz Cutoff
-  writeReg(GYRO_ADR, 0x20, 0xEF);  // 800 Hz, LP 50 Hz Cutoff
+  // writeReg(GYRO_ADR, 0x20, 0xEF);  // 800 Hz, LP 50 Hz Cutoff
 //  writeReg(GYRO_ADR, 0x21, 0x09);  // Normal mode, 1 Hz Cutoff
 
   filtered_gyro_vec = read_gyro_single();
@@ -79,13 +78,16 @@ void Gyro::setup_gyro_stream() {
     while(1){}
   }
 
-//  writeReg(GYRO_ADR, 0x20, 0xEF);  // 800 Hz, LP 50 Hz Cutoff
-  writeReg(GYRO_ADR, 0x20, 0x8F);  // 400 Hz, LP 50 Hz Cutoff
-  // writeReg(GYRO_ADR, 0x20, 0x0F);  // 100 Hz 12.5Hz cutoff, normal mode
-  // writeReg(GYRO_ADR, 0x20, 0x4F);  // 200 Hz 12.5Hz cutoff, normal mode
+  // writeReg(GYRO_ADR, 0x20, 0x8F);  // 400 Hz, LP 110 Hz Cutoff
   // writeReg(GYRO_ADR, 0x21, 0x29);  // Normal mode HPRESETFILTER, HP 0.1 Hz Cutoff
+  // writeReg(GYRO_ADR, 0x23, 0x90);  // Block update until read, FS 500 dps 
+  // writeReg(GYRO_ADR, 0x24, 0x40);  // EN_FIFO
+  // writeReg(GYRO_ADR, 0x2E, 0x40);  // FIFO mode Stream
+
+  writeReg(GYRO_ADR, 0x20, 0xBF);  // 400 Hz, LP 110 Hz Cutoff
+  writeReg(GYRO_ADR, 0x21, 0x20);  // Normal mode, HP 30 Hz Cutoff (for 400Hz ODR)
   writeReg(GYRO_ADR, 0x23, 0x90);  // Block update until read, FS 500 dps 
-  writeReg(GYRO_ADR, 0x24, 0x40);  // EN_FIFO
+  writeReg(GYRO_ADR, 0x24, 0x50);  // EN_FIFO, HPen
   writeReg(GYRO_ADR, 0x2E, 0x40);  // FIFO mode Stream
 
   filtered_gyro_vec = read_gyro_single();
@@ -183,7 +185,7 @@ Vector3 Gyro::read_gyro_single() {
 
 Vector3 Gyro::get_filtered_gyro(){
   if ((micros() - last_gyro_timestamp) < GYRO_REFRESH_PERIOD*1000000) return filtered_gyro_vec; 
-  Vector3 gyro_reading = read_gyro_single();
+  Vector3 gyro_reading = read_gyro_stream();
   filtered_gyro_vec = gyro_reading * GYROLPF_RATIO + filtered_gyro_vec * (1 - GYROLPF_RATIO);
   return filtered_gyro_vec;
 };
