@@ -33,6 +33,7 @@ const Eye<3, 3> I_3;
 const Eye<4, 4> I_4;
 const Eye<6, 6> I_6;
 const Eye<7, 7> I_7;
+const Eye<10, 10> I_10;
 
 const Vector4 zero_4vector = {0,0,0,0};
 const Vector3 zero_3vector = {0,0,0};
