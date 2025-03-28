@@ -1,6 +1,6 @@
 #define PRINT_COMMANDS 0
-#define DEBUG 1
-#define STATE2SERIAL 0
+#define DEBUG 0
+#define STATE2SERIAL 1
 #define HUMAN_READABLE 0  // human readable STATE2SERIAL
 
 #define PRINT_MIN_DELAY 0
