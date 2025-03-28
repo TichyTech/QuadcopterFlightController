@@ -11,35 +11,32 @@ inline float constrain_angle(float angle){
 }
 
 /**
-* Dot product of two Vector3 variables.
+* Dot product of two Vectors.
 */
-inline float dot(Vector3 a, Vector3 b){
-  return a(0)*b(0) + a(1)*b(1) + a(2)*b(2);
-}
-
-inline float dot(Vector4 a, Vector4 b){
-  return a(0)*b(0) + a(1)*b(1) + a(2)*b(2) + a(3)*b(3);
+template <typename Derived0, typename Derived1, int rows, typename dtype>
+inline float dot(const MatrixBase<Derived0, rows, 1, dtype>& a, const MatrixBase<Derived1, rows, 1, dtype>& b){
+  float sum = 0;
+  for (int i = 0; i < rows; i++) sum += a(i)*b(i);
+  return sum;
 }
 
 /**
-* The norm of a Vector3 variable
+* The norm of a Vector
 */
-inline float norm(Vector3 v) {
-  return sqrt(dot(v,v));
-}
-
-inline float norm(Vector4 v) {
+template <typename Derived, int rows, typename dtype>
+inline float norm(const MatrixBase<Derived, rows, 1, dtype>& v) {
   return sqrt(dot(v,v));
 }
 
 /**
  * find the maximum entry in a matrix
  */
-inline float max_norm(Matrix<7,7> A){
+template <int Rows, int Cols>
+inline float max_norm(const Matrix<Rows,Cols>& A){
   float max_float = 0;
 
-  for (int i = 0; i < 7; i++){
-    for (int j = 0; j < 7; j++){
+  for (int i = 0; i < Rows; i++){
+    for (int j = 0; j < Cols; j++){
       if (A(i,j) > max_float) max_float = A(i,j);
     }
   }
@@ -50,11 +47,12 @@ inline float max_norm(Matrix<7,7> A){
 /**
  * find the minimum entry in a matrix
  */
-inline float min_norm(Matrix<7,7> A){
+template <int Rows, int Cols>
+inline float min_norm(const Matrix<Cols,Rows>& A){
   float min_float = 0;
 
-  for (int i = 0; i < 7; i++){
-    for (int j = 0; j < 7; j++){
+  for (int i = 0; i < Cols; i++){
+    for (int j = 0; j < Rows; j++){
       if (A(i,j) < min_float) min_float = A(i,j);
     }
   }
@@ -73,18 +71,13 @@ inline float det(Matrix3 A){
 }
 
 /**
-* Divide a Vector3 variable by its norm.
+* Divide a Vector by its norm.
 */
-inline Vector3 normalize(Vector3 v){
+template <typename Derived, int rows, typename dtype>
+inline MatrixBase<Derived, rows, 1, dtype> normalize(const MatrixBase<Derived, rows, 1, dtype>& v){
   float mult = 1/norm(v);
   return v*mult;
 }
-
-inline Vector4 normalize(Vector4 v){
-  float mult = 1/norm(v);
-  return v*mult;
-}
-
 
 /**
  * Return a skew symmetric matrix created from a Vector3 variable $[v]_x$.
