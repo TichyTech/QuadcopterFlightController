@@ -23,8 +23,9 @@
 const Vector3 ACC_VAR_BASE = {0.05, 0.05, 0.05};
 const Vector3 MAG_VAR_BASE = {1, 1, 1};
 
-#define MAG_INC 1.368266347647853f  // local magnetic inclination [rad]
+// #define MAG_INC 1.368266347647853f  // local magnetic inclination [rad]
 // #define MAG_INC 1.17f  // local magnetic inclination [rad]
+#define MAG_INC 1.13f  // measured local magnetic inclination [rad]
 
 // definitions for steady state detection
 #define THRESHOLD (3.0f)
