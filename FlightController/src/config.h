@@ -29,7 +29,8 @@
 #define SENSOR_TIMEOUT_US 2000  // 2 ms
 
 // filter constants
-#define GYROLPF_RATIO 1.0f  // used to weight the new measurement
+#define GYROLPF_RATIO 1.0f  // used to weight the new measurement 
+#define GYROLPF_PID_RATIO 1.0f  // used to weight the new measurement 
 // #define ACCLPF_RATIO 0.01f  // used to weight the new measurement
 // #define MAGLPF_RATIO 0.05f  // used to weight the new measurement
 #define CF_RATIO 0.95f  // gyro weight in complementary filter
