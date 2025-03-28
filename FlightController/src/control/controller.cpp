@@ -21,11 +21,11 @@ const Vector4 yaw_action = {1,-1,1,-1};
 const Vector4 thrust_action = {1,1,1,1};
 
 Controller::Controller(){
-  roll_rate_PID = PID(2, 0, 0.005, 1, 0.02, 40, "roll");
-  pitch_rate_PID = PID(2, 0, 0.005, 1, 0.02, 40, "pitch");
+  roll_rate_PID = PID(0.8, 3, 0.05, 3, 0.12, 40, "roll");
+  pitch_rate_PID = PID(0.8, 3, 0.05, 3, 0.12, 40, "pitch");
   // yaw_rate_PID = PID(35, 5, 0, 1, 0, 0, "yaw"); 
   // yaw_rate_PID = PID(35, 0, 0.01, 0, 0.02, 40, "yaw"); 
-  yaw_rate_PID = PID(2, 0, 0.01, 0, 0.02, 40, "yaw"); 
+  yaw_rate_PID = PID(2, 2, 0.2, 3, 0.1, 40, "yaw"); 
   alt_PID = PID(50, 5, 30, 2, 0.5, 0, "alt");
 
   // For a linear system, this would yield a time constant tau = 1/P
@@ -72,8 +72,8 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
 
   last_reference = commands;  // store latest reference
 
-  static Vector3 smooth_gyro = m.gyro_vec;
-  smooth_gyro = (1 - GYROLPF_RATIO)*smooth_gyro + GYROLPF_RATIO*m.gyro_vec;
+  // static Vector3 smooth_gyro = m.gyro_vec;
+  // smooth_gyro = (1 - GYROLPF_PID_RATIO)*smooth_gyro + GYROLPF_PID_RATIO*m.gyro_vec;
 
   // Proportional controller on RPY
   des_rates(0) += roll_P*(commands.roll - current_state.roll);  
