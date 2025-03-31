@@ -34,7 +34,7 @@ void loop() {
 
   input_manager.update_readings();
   if (input_manager.button2_rising) motors_on = !motors_on;
-  if (input_manager.button1_rising) motors_mode = 1 + (motors_mode) % 5;
+  if (input_manager.button1_rising) motors_mode = 1 + (motors_mode) % 2;
   Joysticks joys = input_manager.current_joy;
   Joysticks mapped_joys = input_manager.map_joysticks(joys);
 

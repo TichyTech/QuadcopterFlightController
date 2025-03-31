@@ -15,6 +15,9 @@ class Controller{
 		float pitch_P;
 		float yaw_P;
 
+		bool hold_alt;
+		float alt_ref;
+
 		Matrix3 DCM;
 		Vector4 motor_percentages;
 	public:
