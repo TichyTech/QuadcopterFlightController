@@ -81,10 +81,12 @@ void Altimeter::setup_alt(){
     while(1){}
   }
   
-  uint8_t measreg = 0x05 << 5 | 0x02 << 3 | 0x03;  // 2^5x Pressure, 2^2x Temp, normal mode
-//  uint8_t configreg = 0x00 << 5 | 0x01 << 3;  // 0.5 ms standby, X2 filter
-  uint8_t configreg = 0x00 << 5 | 0x03 << 3;  // 0.5 ms standby, X8 filter
-//  uint8_t configreg = 0x00 << 5 | 0x04 << 3;  // 0.5 ms standby, X16 filter
+  // uint8_t measreg = 0x05 << 5 | 0x05 << 2 | 0x03;  // 16x T, 16x P, normal mode
+  uint8_t measreg = 0x02 << 5 | 0x05 << 2 | 0x03;  // 2x T, 16x P, normal mode
+
+//  uint8_t configreg = 0x00 << 5 | 0x01 << 2;  // 0.5 ms standby, X2 filter
+  // uint8_t configreg = 0x00 << 5 | 0x03 << 2;  // 0.5 ms standby, X8 filter
+ uint8_t configreg = 0x00 << 5 | 0x04 << 2;  // 0.5 ms standby, X16 filter
   
   writeReg(ALT_ADR, 0xF4, measreg); // oversampling, mode
   writeReg(ALT_ADR, 0xF5, configreg); // t_standby, filter

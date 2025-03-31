@@ -36,7 +36,7 @@
 #define CF_RATIO 0.95f  // gyro weight in complementary filter
 #define ACCLPF_RATIO 1.0f  // used to weight the new measurement EKF
 #define MAGLPF_RATIO 1.0f  // used to weight the new measurement EKF
-#define ALTLPF_RATIO 0.05f  // used to weight the new measurement
+#define ALTLPF_RATIO 0.3f  // used to weight the new measurement
 #define BATLPF_RATIO 0.1f  // used to weight the new measurement
 
 // Some approximate measurements
