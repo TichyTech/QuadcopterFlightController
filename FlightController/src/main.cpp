@@ -185,7 +185,7 @@ void loop() {  // approxx 0.85 ms per loop
   if (max_val > 10.0f){  // crash the drone :(
     while(1){ 
       signal_motors(zero_4vector);
-      Serial.println("Q out of bounds");
+      Serial.println("P out of bounds");
     }
   }
 
