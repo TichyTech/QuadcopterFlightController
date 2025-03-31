@@ -77,8 +77,8 @@ typedef struct ctrl_msg_t{ // 24 bytes
   float roll;
   float pitch;
   int16_t yaw_diff;
-  float alt_diff;
   int16_t throttle;
+  float alt_diff;
   uint32_t motors_on;
   uint32_t sequence;
 } ctrl_msg_t;  // received command message

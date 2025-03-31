@@ -148,7 +148,8 @@ void loop() {  // approxx 0.85 ms per loop
 
   // TODO: verify this actually helps??
   Vector3 unit_acc = normalize(measured_values.acc_vec);
-  throttle = 0.9f*throttle + 0.1f*motors_on*0.25f*(control_action(0) + control_action(1) + control_action(2) + control_action(3));
+  if (measured_values.battery > 10) throttle = 0.9f*throttle + 0.1f*motors_on*0.25f*(control_action(0) + control_action(1) + control_action(2) + control_action(3));
+  else throttle = 0;
   q = k_filter.fuse_acc(unit_acc);  // fuse accelerometer data
   // q = k_filter.fuse_mag(perp_mag);  // fuse magnetometer data
   Vector3 quad_coeff = {-0.493,0.333,0.385};
@@ -206,7 +207,7 @@ void loop1() {
     if (TELEMETRY && (comm.batt_telem_countdown <= 0)) {  // send some data back to controller 
       telemetry_msg_t msg = comm.create_batt_telemetry(current_state, measured_values);
       comm.send_telemetry(msg);  
-      comm.batt_telem_countdown = 50;  // reset counter
+      comm.batt_telem_countdown = 10;  // reset counter
     }
     
     // the following telemetry takes about 0.9 ms

@@ -180,6 +180,8 @@ void print_commands(ctrl_msg_t ctrl_msg){
   Serial.print(" ");
   Serial.print(ctrl_msg.throttle);
   Serial.print(" ");
+  Serial.print(ctrl_msg.alt_diff);
+  Serial.print(" ");
   Serial.print(ctrl_msg.motors_on);
   Serial.println();
 }
