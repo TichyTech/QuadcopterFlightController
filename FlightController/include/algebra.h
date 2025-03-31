@@ -16,7 +16,7 @@ inline float constrain_angle(float angle){
 template <typename Derived0, typename Derived1, int rows, typename dtype>
 inline float dot(const MatrixBase<Derived0, rows, 1, dtype>& a, const MatrixBase<Derived1, rows, 1, dtype>& b){
   float sum = 0;
-  for (int i = 0; i < rows; i++) sum += a(i)*b(i);
+  for (int i = 0; i < rows; i++) sum += a(i, 0)*b(i, 0);
   return sum;
 }
 
@@ -63,7 +63,7 @@ inline float min_norm(const Matrix<Cols,Rows>& A){
 /**
 * The determinant of a 3x3 matrix.
 */
-inline float det(Matrix3 A){
+inline float det(const Matrix3& A){
   float sum = A(0,0)*(A(1,1)*A(2,2) - A(1,2)*A(2,1));
   sum += A(0,1)*(A(1,2)*A(2,0) - A(1,0)*A(2,2));
   sum += A(0,2)*(A(1,0)*A(2,1) - A(1,1)*A(2,0));
@@ -74,15 +74,15 @@ inline float det(Matrix3 A){
 * Divide a Vector by its norm.
 */
 template <typename Derived, int rows, typename dtype>
-inline MatrixBase<Derived, rows, 1, dtype> normalize(const MatrixBase<Derived, rows, 1, dtype>& v){
-  float mult = 1/norm(v);
+inline Matrix<rows> normalize(const MatrixBase<Derived, rows, 1, dtype>& v){
+  float mult = 1.0f/norm(v);
   return v*mult;
 }
 
 /**
  * Return a skew symmetric matrix created from a Vector3 variable $[v]_x$.
  */
-inline Matrix3 skew(Vector3 v){  // skew symmetric matrix 
+inline Matrix3 skew(const Vector3& v){  // skew symmetric matrix 
   Matrix3 S = {0, -v(2), v(1),
                v(2), 0, -v(0),
                -v(1), v(0), 0};
@@ -92,14 +92,14 @@ inline Matrix3 skew(Vector3 v){  // skew symmetric matrix
 /**
  * Return the trace of a 3x3 Matrix
 */
-inline float trace(Matrix3 A){
+inline float trace(const Matrix3& A){
   return A(0,0) + A(1,1) + A(2,2);
 }
 
 /**
  * Return the outer product $vv^T$ of a vector v.
  */
-inline Matrix3 outer(Vector3 v){  // skew symmetric matrix 
+inline Matrix3 outer(const Vector3& v){  // skew symmetric matrix 
   Matrix3 vvT = v*(~v);
   return vvT;
 }
@@ -108,7 +108,7 @@ inline Matrix3 outer(Vector3 v){  // skew symmetric matrix
 /**
  * This function implements the Rodriguez formula for a conversion from the axis angle representation to a rotation matrix representation.
  */
-inline Matrix3 rodriguez(Vector3 axis, float angle){
+inline Matrix3 rodriguez(const Vector3& axis, float angle){
   Matrix3 K = skew(axis);
   Matrix3 R = I_3 + K*sin(angle) + K*K*(1 - cos(angle));  // Rodriguez rotation formula
   return R;
@@ -117,7 +117,7 @@ inline Matrix3 rodriguez(Vector3 axis, float angle){
 /**
  * Normalize the columns of a 3x3 matrix.
  */
-inline Matrix3 normalize_columns(Matrix3 A){
+inline Matrix3 normalize_columns(const Matrix3& A){
   Matrix<3, 1> a1,a2,a3;
   a1 = A.Column(0);
   a2 = A.Column(1);
@@ -131,7 +131,7 @@ inline Matrix3 normalize_columns(Matrix3 A){
 /**
 * This implements some clever way to normalize a 3x3 matrix. 
 */
-inline Matrix3 normalize_matrix(Matrix3 A){
+inline Matrix3 normalize_matrix(const Matrix3& A){
   Vector3 a1,a2,a3;
   float e = dot(A.Column(0), A.Column(1));
   a1 = A.Column(0) - A.Column(1)*e/2.0f;
