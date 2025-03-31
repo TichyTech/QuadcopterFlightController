@@ -118,7 +118,7 @@ bool parse_serial(msg_t& msg){
   String serial_line = Serial.readStringUntil('\n');  // serial line
   uint8_t space_loc = serial_line.indexOf(' ');  // first space
   String msg_type = serial_line.substring(0, space_loc);
-  if (!(msg_type == "roll" || msg_type == "pitch" || msg_type == "yaw")) return 0;  // no message
+  if (!(msg_type == "roll" || msg_type == "pitch" || msg_type == "yaw" || msg_type == "alt")) return 0;  // no message
   config_msg_t new_config = config_from_line(serial_line);
 
   if (msg_type == "roll"){
@@ -155,7 +155,7 @@ config_msg_t config_from_line(String serial_line){
 
   for (int i = 0; i < 5; i++){
     int next_space = serial_line.indexOf(' ', space_loc + 1);
-    if (next_space == -1) next_space = serial_line.length() - 1;
+    if (next_space == -1) next_space = serial_line.length();
     String numero = serial_line.substring(space_loc, next_space);
     serial_reading[i] = numero.toFloat();
     space_loc = next_space;
