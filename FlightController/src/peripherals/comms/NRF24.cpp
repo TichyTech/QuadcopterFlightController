@@ -15,7 +15,7 @@ Communication::Communication(){
 
   batt_telem_countdown = 50;
 
-  latest_control = {0,0,0,0,0};  // roll, pitch, yaw, throttle, motors_on
+  latest_control = {0,0,0,0,0,0};  // roll, pitch, yaw, throttle, motors_on
 }
 
 void Communication::setup_nrf(){
@@ -66,8 +66,9 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
     comm_timed_out = 0;
     latest_control.roll = new_ctrl_msg.roll;
     latest_control.pitch = new_ctrl_msg.pitch;
-    latest_control.yaw = constrain_angle(initial_yaw + new_ctrl_msg.yaw_diff);
-    latest_control.throttle = new_ctrl_msg.throttle;
+    latest_control.yaw = constrain_angle(initial_yaw + float(new_ctrl_msg.yaw_diff)/32.0f);
+    latest_control.alt_diff = new_ctrl_msg.alt_diff;
+    latest_control.throttle = float(new_ctrl_msg.throttle)/1024.0f;
     latest_control.motors_on = new_ctrl_msg.motors_on;
     // check sequence number on the packet and compare to last seen
     if (++ctrl_sequence_num != new_ctrl_msg.sequence) {

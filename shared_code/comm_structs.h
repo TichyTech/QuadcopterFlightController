@@ -73,16 +73,17 @@ inline float mag_to_float(int16_t mag){
 
 // Data structs for communication
 
-typedef struct ctrl_msg_t{
+typedef struct ctrl_msg_t{ // 24 bytes
   float roll;
   float pitch;
-  float yaw_diff;
-  float throttle;
+  int16_t yaw_diff;
+  float alt_diff;
+  int16_t throttle;
   uint32_t motors_on;
   uint32_t sequence;
 } ctrl_msg_t;  // received command message
 
-typedef struct config_msg_t{
+typedef struct config_msg_t{  // 24 bytes
   float P;
   float I;
   float D;

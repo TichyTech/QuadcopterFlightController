@@ -57,6 +57,7 @@ typedef struct Control{
   float roll = 0;
   float pitch = 0;
   float yaw = 0;
+  float alt_diff = 0;
   float throttle = 0;
   uint32_t motors_on = 0;
 } Control;

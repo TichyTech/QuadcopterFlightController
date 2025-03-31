@@ -49,8 +49,9 @@ void loop() {
     smooth_joys = input_manager.smooth_joysticks(mapped_joys, 0.7);
     if (abs(smooth_joys.X) < 1) smooth_joys.X = 0;  // discard small angles
     yaw_diff_setpoint += smooth_joys.X;
+    float alt_diff = smooth_joys.Y/100.0f;
     // subtract IMU/thrust angle diff ~[1,9, 1.6]
-    ctrl_msg_t ctrl_msg = {smooth_joys.X2 - 1.9, smooth_joys.Y2 - 1.6, yaw_diff_setpoint, input_manager.pot_reading, uint8_t(motors_on*motors_mode), ++sequence_num};
+    ctrl_msg_t ctrl_msg = {smooth_joys.X2 - 1.9, smooth_joys.Y2 - 1.6, int16_t(yaw_diff_setpoint*32.0f), alt_diff, int16_t(input_manager.pot_reading*1024.0f), uint8_t(motors_on*motors_mode), ++sequence_num};
     last_cmd_t = millis();
     bool report = Comms.send_ctrl(ctrl_msg);
     if (DEBUG) Serial.println("Sending commands"); 

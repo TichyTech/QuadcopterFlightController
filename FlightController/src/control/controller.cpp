@@ -103,6 +103,7 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
       hold_alt = 1;
       alt_ref = m.altitude;
     }
+    alt_ref = alt_ref + commands.alt_diff*dt;
     alt_force = alt_PID.process(alt_ref, m.altitude, dt);
     alt_force = alt_force / 680.0f;
   }
