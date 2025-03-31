@@ -26,7 +26,7 @@ Controller::Controller(){
   // yaw_rate_PID = PID(35, 5, 0, 1, 0, 0, "yaw"); 
   // yaw_rate_PID = PID(35, 0, 0.01, 0, 0.02, 40, "yaw"); 
   yaw_rate_PID = PID(2, 2, 0.2, 3, 0.1, 40, "yaw"); 
-  alt_PID = PID(50, 5, 30, 2, 0.5, 0, "alt");
+  alt_PID = PID(1, 0, 0.01, 3, 0.33, 20, "alt");
 
   // For a linear system, this would yield a time constant tau = 1/P
   roll_P = 3;

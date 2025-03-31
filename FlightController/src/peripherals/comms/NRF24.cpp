@@ -6,6 +6,13 @@ Communication::Communication(){
   new_roll_config = 0;
   new_pitch_config = 0;
   new_yaw_config = 0;
+  new_alt_config = 0;
+
+  roll_config = {0,0,0,1,1};
+  pitch_config = {0,0,0,1,1};
+  yaw_config = {0,0,0,1,1};
+  alt_config = {0,0,0,1,1};
+
   batt_telem_countdown = 50;
 
   latest_control = {0,0,0,0,0};  // roll, pitch, yaw, throttle, motors_on
@@ -49,20 +56,8 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
       new_ctrl_msg = msg.data.ctrl_data; 
     }
     else if (msg.type == 1){ // config message received
+      push_config(msg.data.config_data);
       if (DEBUG && DEBUG_COMM) Serial.println("config received");
-      config_msg_t new_config = msg.data.config_data;
-      if (new_config.axis == 0){  // roll
-        roll_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
-        new_roll_config = 1;
-      }
-      else if (new_config.axis == 1){  // pitch
-        pitch_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
-        new_pitch_config = 1;
-      }
-      else if (new_config.axis == 2){  // yaw
-        yaw_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
-        new_yaw_config = 1;
-      }
     }
   }
   
@@ -93,6 +88,47 @@ Control Communication::update_commands(float initial_yaw){  // receive latest co
 
   return latest_control;
 };
+
+void Communication::push_config(config_msg_t new_config){
+  if (new_config.axis == 0){  // roll
+    roll_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
+    new_roll_config = 1;
+  }
+  else if (new_config.axis == 1){  // pitch
+    pitch_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
+    new_pitch_config = 1;
+  }
+  else if (new_config.axis == 2){  // yaw
+    yaw_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
+    new_yaw_config = 1;
+  }
+  else if (new_config.axis == 3){  // alt
+    alt_config.set(new_config.P, new_config.I, new_config.D, new_config.sat, new_config.LPc);
+    new_alt_config = 1;
+  }
+}
+
+PID_config Communication::pop_config(uint8_t axis){
+  switch (axis){
+    case 0:
+      new_roll_config = 0;
+      return roll_config;
+    case 1:
+      new_pitch_config = 0;
+      return pitch_config;
+    case 2:
+      new_yaw_config = 0;
+      return yaw_config;
+    case 3:
+      new_alt_config = 0;
+      return alt_config;
+    default: 
+    break;
+  }
+
+  PID_config empty_config = {0, 0, 0, 1, 1};  // PID that outputs 0
+  return empty_config;
+}
 
 telemetry_msg_t Communication::create_state_telemetry(State state, Vector4 control, float init_yaw, Vector3 PID_outputs, Control ref){
   state_struct data;

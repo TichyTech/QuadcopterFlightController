@@ -133,6 +133,10 @@ bool parse_serial(msg_t& msg){
     new_config.axis = 2;
     if (DEBUG) Serial.print("Sending Yaw config: ");
   }
+  else if (msg_type == "alt"){
+    new_config.axis = 3;
+    if (DEBUG) Serial.print("Sending Alt config: ");
+  }
   if (DEBUG){
     String text = "P " + String(new_config.P, 2) + ", I " + String(new_config.I, 2) + 
     ", D " + String(new_config.D, 2) + ", sat " + String(new_config.sat, 2) + ", LPc " + String(new_config.LPc, 2);
