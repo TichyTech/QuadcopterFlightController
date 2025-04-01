@@ -23,8 +23,6 @@ const Vector4 thrust_action = {1,1,1,1};
 Controller::Controller(){
   roll_rate_PID = PID(0.8, 3, 0.05, 3, 0.12, 40, "roll");
   pitch_rate_PID = PID(0.8, 3, 0.05, 3, 0.12, 40, "pitch");
-  // yaw_rate_PID = PID(35, 5, 0, 1, 0, 0, "yaw"); 
-  // yaw_rate_PID = PID(35, 0, 0.01, 0, 0.02, 40, "yaw"); 
   yaw_rate_PID = PID(2, 2, 0.2, 3, 0.1, 40, "yaw"); 
   alt_PID = PID(1, 0, 0.01, 3, 0.33, 20, "alt");
 
@@ -76,9 +74,6 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
 
   last_reference = commands;  // store latest reference
 
-  // static Vector3 smooth_gyro = m.gyro_vec;
-  // smooth_gyro = (1 - GYROLPF_PID_RATIO)*smooth_gyro + GYROLPF_PID_RATIO*m.gyro_vec;
-
   // Proportional controller on RPY
   des_rates(0) += roll_P*(commands.roll - current_state.roll);  
   des_rates(1) += pitch_P*(commands.pitch - current_state.pitch);
@@ -110,7 +105,6 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
   else hold_alt = 0;
 
   Vector4 new_percentages = mix_motors(forces, DCM, commands.throttle + alt_force, m.battery);
-  // motor_percentages = new_percentages*MOTOR_LPF + motor_percentages*(1-MOTOR_LPF);
 
   // Jerk clamping 
   Vector4 d_p = (new_percentages - motor_percentages)/dt;  //normalize by time constant
@@ -143,22 +137,14 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
 }
 
 Vector4 Controller::mix_motors(Vector3 forces, Matrix3 DCM, float throttle, float battery){  
-  //TODO: include battery charge compensation, YAW compensation
   Vector4 motor_percentages = {0, 0, 0, 0};
   if (DCM(2,2) > 0){  // facing up
     // motor_percentages += thrust_action * throttle / DCM(2,2);  // compensate gravity
     motor_percentages += thrust_action * throttle;  // compensate gravity
   }
-  // float t = throttle / DCM(2,2);
-  // if (t <= 0.2){  // for small throttle, keep values
-    motor_percentages += roll_action * (forces(0) / MOTOR_FORCE);  
-    motor_percentages += pitch_action * (forces(1) / MOTOR_FORCE); 
-  // }
-  // else {
-  //   motor_percentages += roll_action * (forces(0) / (MOTOR_FORCE * 5 * t));  //scale down with increasing throttle
-  //   motor_percentages += pitch_action * (forces(1) / (MOTOR_FORCE * 5 * t)); 
-  // }
-  motor_percentages += yaw_action*forces(2) / (MOTOR_FORCE);
+  motor_percentages += roll_action * forces(0) * (1.0f/MOTOR_FORCE);  
+  motor_percentages += pitch_action * forces(1) * (1.0f/MOTOR_FORCE); 
+  motor_percentages += yaw_action * forces(2) * (1.0f/MOTOR_FORCE);
 
   if (battery > 10) // should always be the case, if battery is connected
   motor_percentages *= (IDEAL_VOLTAGE*IDEAL_VOLTAGE)/(battery*battery);  // battery charge compensation

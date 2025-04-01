@@ -195,7 +195,7 @@ void loop1() {
       comm.batt_telem_countdown = 10;  // reset counter
     }
     
-    // the following telemetry takes about 0.9 ms
+    // the nrf24 telemetry takes about 0.9 ms per message
     if (!loop_telemetry_sent){
       telemetry_msg_t msg = comm.create_state_telemetry(current_state, control_action, initial_yaw, controller.last_PID_outputs, controller.last_reference);
       comm.send_telemetry(msg);
