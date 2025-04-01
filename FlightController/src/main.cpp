@@ -23,7 +23,7 @@ Matrix3 estimated_DCM;  // matrix to store current estimated attitude
 State current_state;
 Vector4 q;  // current attitude quaternion
 Control commands;
-Vector4 control_action; 
+Vector4 control_action = {0,0,0,0}; 
 
 uint32_t start_time = 0;
 float initial_yaw = 0;
@@ -104,7 +104,7 @@ void setup1(){
 bool loop_telemetry_sent = false;
 
 float throttle = 0;
-void loop() {  // approxx 0.85 ms per loop 
+void loop() {
   while(digitalRead(SWITCH_PIN)) {  // stop motors and blink red LED if switch is on
     signal_motors(zero_4vector);  
     digitalWrite(REDLED_PIN, 1);  
@@ -146,35 +146,20 @@ void loop() {  // approxx 0.85 ms per loop
   q = k_filter.predict(measured_values.gyro_vec, measured_values.integration_period);  // model prediction using gyro
   k_filter.track_acc(measured_values.acc_vec, measured_values.integration_period);  // track accelerometer magnitude
 
-  // TODO: verify this actually helps??
+  // fuse acceleration using EKF
   Vector3 unit_acc = normalize(measured_values.acc_vec);
-  if (measured_values.battery > 10) throttle = 0.9f*throttle + 0.1f*motors_on*0.25f*(control_action(0) + control_action(1) + control_action(2) + control_action(3));
-  else throttle = 0;
   q = k_filter.fuse_acc(unit_acc);  // fuse accelerometer data
-  // q = k_filter.fuse_mag(perp_mag);  // fuse magnetometer data
-  Vector3 quad_coeff = {-0.493,0.333,0.385};
-  Vector3 mg_bias = throttle*throttle*quad_coeff;
-  Vector3 comp_mag = measured_values.mag_vec - mg_bias;
-  Vector3 unit_mag = normalize(comp_mag);
-  // Vector3 perp_mag = unit_mag - dot(unit_mag, unit_acc)*unit_acc;
-  Vector3 est_up = estimated_DCM.Column(2);
-  Vector3 perp_mag = unit_mag - dot(unit_mag, est_up)*est_up;
 
-
-  q = k_filter.fuse_mag(normalize(perp_mag));  // fuse unnormalized mag
-
-  // if (DEBUG){
-  //   Serial.print(throttle);
-  //   Serial.print(" ");
-  //   printVec3(k_filter.mag_bias, 2);
-  //   Serial.println();
-  // }
+  // fuse magnetometer using EKF
+  Vector3 unit_mag;
+  if (measured_values.battery > 10) unit_mag = normalize(k_filter.remove_mag_bias(measured_values.mag_vec, motors_on*0.25f*sum(control_action)));
+  else unit_mag = normalize(measured_values.mag_vec);  
+  Vector3 est_up = estimated_DCM.Column(2);  // best guess of UP direction
+  Vector3 perp_mag = unit_mag - dot(unit_mag, est_up)*est_up;  // horizontal component of magnetic vector
+  q = k_filter.fuse_mag(normalize(perp_mag));  // fuse mag
 
   estimated_DCM = k_filter.quat2R(q);  // quat to DCM conversion
   float max_val = k_filter.clamp_variance();  // reduce variance if too big
-
-  // printVec3(measured_values.acc_vec, 3);
-  // Serial.println();
 
   // guarding numerical stability of EKF
   if (isinf(q(0)) && isinf(q(1)) && isinf(q(2)) && isinf(q(3))){

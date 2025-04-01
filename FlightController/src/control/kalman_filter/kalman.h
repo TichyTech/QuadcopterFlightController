@@ -32,6 +32,7 @@ class KalmanFilter{
     bool acc_steady();
     float get_P_max();
     float get_P_min();
+    Vector3 remove_mag_bias(Vector3 mag, float th);
     Vector4 predict(Vector3 gyro_vec, float dt);
     Vector4 fuse_acc(Vector3 a);
     Vector4 fuse_mag(Vector3 m);

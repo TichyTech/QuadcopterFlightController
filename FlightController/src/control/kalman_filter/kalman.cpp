@@ -2,29 +2,15 @@
 
 // constants for the EKF
 #define QUAT_VAR_INIT 0.01f
-// #define BIAS_VAR_INIT 0.0000001f
 #define BIAS_VAR_INIT 0.00001f
 #define STEADY_BIAS_VAR_MULT 10
-// #define GYRO_VAR 0.0006f  // [rad/s]
-// #define ACC_VAR_BASE 0.1f
-// #define MAG_VAR_BASE 0.1f
-// #define GYRO_VAR 0.000061f  // [rad/s]
-// #define GYRO_VAR 0.0061f  // [rad/s]
-// #define GYRO_VAR 0.015f
-// #define BIAS_VAR 0.0000001f  // [rad/s]
 #define BIAS_VAR 0.00001f  // [rad/s]
-// const Vector3 ACC_VAR_BASE = {0.1, 0.18, 0.33};
-// const Vector3 ACC_VAR_BASE = {0.05, 0.03, 0.15};
-// const Vector3 MAG_VAR_BASE = {0.1, 0.1, 0.1};
-// const Vector3 MAG_VAR_BASE = {3, 3, 3};
-
-// Best Calib Ever
 #define GYRO_VAR 0.000015f 
 const Vector3 ACC_VAR_BASE = {0.05, 0.05, 0.05};
 const Vector3 MAG_VAR_BASE = {1, 1, 1};
 
-// #define MAG_INC 1.368266347647853f  // local magnetic inclination [rad]
-// #define MAG_INC 1.17f  // local magnetic inclination [rad]
+const Vector3 mag_bias_quad = {-0.493,0.333,0.385};  // quadratic coefficient for magnetic bias w.r.t. throttle
+
 #define MAG_INC 1.13f  // measured local magnetic inclination [rad]
 
 // definitions for steady state detection
@@ -101,6 +87,18 @@ bool KalmanFilter::gyro_steady(){
 bool KalmanFilter::acc_steady(){
   return (1000.0f*acc_timer > ACC_TIMEOUT);  
 }
+
+/**
+ * remove magnetic bias from mag measurement
+ */
+Vector3 KalmanFilter::remove_mag_bias(Vector3 mag, float throttle){
+  static float lp_th = throttle;
+  lp_th = 0.9f*lp_th + 0.1f*throttle;  // low pass filtered throttle
+
+  Vector3 mg_bias = lp_th*lp_th*mag_bias_quad;
+  return mag - mg_bias;
+}
+
 
 /** 
  * Use rotation model to predict quaternion attitude using gyro and time 
