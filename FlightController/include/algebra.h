@@ -29,6 +29,20 @@ inline float norm(const MatrixBase<Derived, rows, 1, dtype>& v) {
 }
 
 /**
+ * Sum of matrix elements
+ */
+template <typename Derived, int rows, int cols, typename dtype>
+inline float sum(const MatrixBase<Derived, rows, cols, dtype>& v){
+  float sum = 0;
+  for (int i = 0; i < rows; i++){
+    for (int j = 0; j < cols; j++) {
+      sum += v(i, j);
+    }
+  }
+  return sum;
+}
+
+/**
  * find the maximum entry in a matrix
  */
 template <int Rows, int Cols>
