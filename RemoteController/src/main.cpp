@@ -48,7 +48,7 @@ void loop() {
   if ((millis() - last_cmd_t) >= 50){
     smooth_joys = input_manager.smooth_joysticks(mapped_joys, 0.7);
     if (abs(smooth_joys.X) < 1) smooth_joys.X = 0;  // discard small angles
-    yaw_diff_setpoint += smooth_joys.X;
+    yaw_diff_setpoint -= smooth_joys.X;
     float alt_diff = smooth_joys.Y/100.0f;
     // subtract IMU/thrust angle diff ~[1,9, 1.6]
     ctrl_msg_t ctrl_msg = { smooth_joys.X2 - 1.9, smooth_joys.Y2 - 1.6, 
