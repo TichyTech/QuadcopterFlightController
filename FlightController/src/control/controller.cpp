@@ -21,9 +21,9 @@ const Vector4 yaw_action = {1,-1,1,-1};
 const Vector4 thrust_action = {1,1,1,1};
 
 Controller::Controller(){
-  roll_rate_PID = PID(0.8, 3, 0.05, 3, 0.12, 40, "roll");
-  pitch_rate_PID = PID(0.8, 3, 0.05, 3, 0.12, 40, "pitch");
-  yaw_rate_PID = PID(2, 2, 0.2, 3, 0.1, 40, "yaw"); 
+  roll_rate_PID = PID(0.8, 3, 0.03, 3, 0.3, 40, "roll");
+  pitch_rate_PID = PID(0.8, 3, 0.03, 3, 0.3, 40, "pitch");
+  yaw_rate_PID = PID(0.8, 3, 0.02, 3, 0.33, 40, "yaw"); 
   alt_PID = PID(1, 0, 0.01, 3, 0.33, 20, "alt");
 
   // For a linear system, this would yield a time constant tau = 1/P

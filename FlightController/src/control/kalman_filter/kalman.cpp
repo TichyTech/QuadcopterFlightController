@@ -9,7 +9,7 @@
 const Vector3 ACC_VAR_BASE = {0.05, 0.05, 0.05};
 const Vector3 MAG_VAR_BASE = {1, 1, 1};
 
-const Vector3 mag_bias_quad = {-0.493,0.333,0.385};  // quadratic coefficient for magnetic bias w.r.t. throttle
+const Vector3 mag_bias_quad = {-0.737,0.444,0.583};  // quadratic coefficient for magnetic bias w.r.t. throttle
 
 #define MAG_INC 1.13f  // measured local magnetic inclination [rad]
 
