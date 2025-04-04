@@ -91,7 +91,7 @@ void draw() {
     drawMotorPercentage(motor_percentages, 240, 20);
     drawBattAlt(altitude, battery, width - 160, 0);
     drawMessageCount(dt, width - 440, 0);
-    drawCommandLine(20, height - height/3);
+    drawCommandLine(20, height - height/2);
     
     drawXYZ(sensor_database.mss, sensor_database.gyros, width - width/3, height - height/3, width/3, height/3, 50, sensor_database.start, sensor_database.items, "Gyro");
     drawXYZ(sensor_database.mss, sensor_database.accs, 0, height - height/3, width/3, height/3, 2, sensor_database.start, sensor_database.items, "Acc");
