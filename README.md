@@ -30,9 +30,9 @@ The [drone plotter](DronePlotter) is then a simple visualization application wri
 
 These components are all soldered onto a single printed circuit board together with some resistors, leds, buttons and headers.
 <div align="center">
-<img src="https://github.com/user-attachments/assets/e0b6734f-1725-4d4c-80f0-add37cce425e" alt="Schematic" width="300"/>
-<img src="https://github.com/user-attachments/assets/b0ca1b17-aefe-4f4c-81d1-9dcd8bb294eb" alt="BoardFront" width="300"/>
-<img src="https://github.com/user-attachments/assets/ec872b25-bdf1-488c-b9b2-42578bd2057d" alt="BoardBack" width="300"/>
+<img src="https://github.com/user-attachments/assets/e0b6734f-1725-4d4c-80f0-add37cce425e" alt="Schematic" height="200"/>
+<img src="https://github.com/user-attachments/assets/b0ca1b17-aefe-4f4c-81d1-9dcd8bb294eb" alt="BoardFront" height="200"/>
+<img src="https://github.com/user-attachments/assets/ec872b25-bdf1-488c-b9b2-42578bd2057d" alt="BoardBack" height="200"/>
 </div>
 
 ### Onboard electronics
@@ -59,12 +59,12 @@ Together with the Flight controller board, these are placed in a 3D printed fram
 Again, these are all soldered onto a single PCB and encased in a 3D printed case.
 
 <div align="center">
-<img src="https://github.com/user-attachments/assets/248d8148-2569-4644-9dd4-d5fad3795bd8" alt="Remote" width="300"/>
-<img src="https://github.com/user-attachments/assets/9f530088-0f82-439b-b7c9-2765e080a28f" alt="Remote" width="300"/>
+<img src="https://github.com/user-attachments/assets/248d8148-2569-4644-9dd4-d5fad3795bd8" alt="Remote" height="200"/>
+<img src="https://github.com/user-attachments/assets/9f530088-0f82-439b-b7c9-2765e080a28f" alt="Remote" height="200"/>
 </div>
 
 And finally, when all put together, it flies!!! 
 
 <div align="center">
-<img src="SucessfulFlight.gif" alt="BoardBack" width="300"/>
+<img src="SucessfulFlight.gif" alt="BoardBack" height="300"/>
 </div>
