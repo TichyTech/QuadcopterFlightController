@@ -1,6 +1,6 @@
 #include "peripherals.h"
 
-#define JOY_FS 10.0f
+#define JOY_FS 15.0f
 #define ADC_FS 1023.0f
 
 

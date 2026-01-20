@@ -24,6 +24,7 @@ Controller::Controller(){
   roll_rate_PID = PID(0.8, 3, 0.03, 3, 0.3, 40, "roll");
   pitch_rate_PID = PID(0.8, 3, 0.03, 3, 0.3, 40, "pitch");
   yaw_rate_PID = PID(0.8, 3, 0.02, 3, 0.33, 40, "yaw"); 
+  // yaw_rate_PID = PID(2, 2, 0.2, 3, 0.1, 40, "yaw"); 
   alt_PID = PID(1, 0, 0.01, 3, 0.33, 20, "alt");
 
   // For a linear system, this would yield a time constant tau = 1/P
@@ -83,6 +84,8 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
   des_rates(1) = constrain(des_rates(1), -150, 150);
   des_rates(2) = constrain(des_rates(2), -90, 90);
 
+  // if (commands.motors_on == 2) des_rates(0) = commands.roll;  // override roll rates
+
   forces(0) = roll_rate_PID.process( des_rates(0), m.gyro_vec(0), dt);
   forces(1) = pitch_rate_PID.process(des_rates(1), m.gyro_vec(1), dt);
   forces(2) = yaw_rate_PID.process(  des_rates(2), m.gyro_vec(2), dt);
@@ -93,16 +96,16 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
   forces(1) = constrain(forces(1), -60, 60);
   forces(2) = constrain(forces(2), -30, 30);
 
-  if (commands.motors_on == 2){
-    if (!hold_alt){
-      hold_alt = 1;
-      alt_ref = m.altitude;
-    }
-    alt_ref = alt_ref + commands.alt_diff*dt;
-    alt_force = alt_PID.process(alt_ref, m.altitude, dt);
-    alt_force = alt_force / 680.0f;
-  }
-  else hold_alt = 0;
+  // if (commands.motors_on == 2){
+  //   if (!hold_alt){
+  //     hold_alt = 1;
+  //     alt_ref = m.altitude;
+  //   }
+  //   alt_ref = alt_ref + commands.alt_diff*dt;
+  //   alt_force = alt_PID.process(alt_ref, m.altitude, dt);
+  //   alt_force = alt_force / 680.0f;
+  // }
+  // else hold_alt = 0;
 
   Vector4 new_percentages = mix_motors(forces, DCM, commands.throttle + alt_force, m.battery);
 
@@ -116,22 +119,22 @@ Vector4 Controller::update_motor_percentages(Control commands, Measurements m){
   d_p(3) = constrain(d_p(3), -change_limit, change_limit);
   motor_percentages = motor_percentages + d_p*dt;
 
-  // switch(commands.motors_on){ // enable turning on one motor at a time for debbuging purposes
-  //   case 2:
-  //     motor_percentages = {commands.throttle,0,0,0};
-  //     break;
-  //   case 3:
-  //     motor_percentages = {0,commands.throttle,0,0};
-  //     break;
-  //   case 4:
-  //     motor_percentages = {0,0,commands.throttle,0};
-  //     break;
-  //   case 5:
-  //     motor_percentages = {0,0,0,commands.throttle};
-  //     break;
-  //   default:
-  //     break;
-  // }
+  switch(commands.motors_on){ // enable turning on one motor at a time for debbuging purposes
+    case 2:
+      motor_percentages = {commands.throttle,0,0,0};
+      break;
+    case 3:
+      motor_percentages = {0,commands.throttle,0,0};
+      break;
+    case 4:
+      motor_percentages = {0,0,commands.throttle,0};
+      break;
+    case 5:
+      motor_percentages = {0,0,0,commands.throttle};
+      break;
+    default:
+      break;
+  }
   
   return motor_percentages;
 }
@@ -146,8 +149,8 @@ Vector4 Controller::mix_motors(Vector3 forces, Matrix3 DCM, float throttle, floa
   motor_percentages += pitch_action * forces(1) * (1.0f/MOTOR_FORCE); 
   motor_percentages += yaw_action * forces(2) * (1.0f/MOTOR_FORCE);
 
-  if (battery > 10) // should always be the case, if battery is connected
-  motor_percentages *= (IDEAL_VOLTAGE*IDEAL_VOLTAGE)/(battery*battery);  // battery charge compensation
+  // if (battery > 10) // should always be the case, if battery is connected
+  // motor_percentages *= (IDEAL_VOLTAGE*IDEAL_VOLTAGE)/(battery*battery);  // battery charge compensation
 
   motor_percentages(0) = constrain(motor_percentages(0), 0, 1);
   motor_percentages(1) = constrain(motor_percentages(1), 0, 1);

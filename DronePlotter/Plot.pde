@@ -42,29 +42,29 @@ void drawXYZ(long[] ms, float[][] vals, int x, int y, int plot_width, int plot_h
   
   colorMode(RGB, 1);
   
-  int total_samples = 0;
-  float[] max = {-full_scale, -full_scale, -full_scale};
-  float[] min = {full_scale, full_scale, full_scale};
-  float[] mean = {0,0,0};
-  for (int inc = 1; inc < points; inc++){
-    int i = (start_plot + inc) % len;
-    long cur_ms = ms[i];
-    if (cur_ms < first_ms) continue;
-    for (int axis=0; axis<3; axis++){
-      float val = vals[i][axis];
-      max[axis] = val > max[axis] ? val : max[axis];
-      min[axis] = val < min[axis] ? val : min[axis];
-      mean[axis] += val;
-    }
-    total_samples += 1;
-  }
+  //int total_samples = 0;
+  //float[] max = {-full_scale, -full_scale, -full_scale};
+  //float[] min = {full_scale, full_scale, full_scale};
+  //float[] mean = {0,0,0};
+  //for (int inc = 1; inc < points; inc++){
+  //  int i = (start_plot + inc) % len;
+  //  long cur_ms = ms[i];
+  //  if (cur_ms < first_ms) continue;
+  //  for (int axis=0; axis<3; axis++){
+  //    float val = vals[i][axis];
+  //    max[axis] = val > max[axis] ? val : max[axis];
+  //    min[axis] = val < min[axis] ? val : min[axis];
+  //    mean[axis] += val;
+  //  }
+  //  total_samples += 1;
+  //}
   
-  mean[0] = mean[0] / float(total_samples);
-  mean[1] = mean[1] / float(total_samples);
-  mean[2] = mean[2] / float(total_samples);
+  //mean[0] = mean[0] / float(total_samples);
+  //mean[1] = mean[1] / float(total_samples);
+  //mean[2] = mean[2] / float(total_samples);
 
-  drawVector3(min, x, y-160, "-", 1);
-  drawVector3(max, x+160, y-160, "+", 1);
-  drawVector3(mean, x+320, y-160, "=", 1);
+  //drawVector3(min, x, y-160, "-", 1);
+  //drawVector3(max, x+160, y-160, "+", 1);
+  //drawVector3(mean, x+320, y-160, "=", 1);
 
 }
